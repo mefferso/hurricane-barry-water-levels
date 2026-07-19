@@ -8,7 +8,7 @@ An interactive, hourly reconstruction of Hurricane Barry (July 10–20, 2019) al
 - Port Fourchon, Belle Pass (8762075)
 - West Bank 1, Bayou Gauche (8762482)
 
-The map shows observed water level, departure from the predicted astronomical tide, Hurricane Barry's NHC best-track position and intensity, timeline playback, direct hourly stepping, and CDT/UTC timestamps.
+The map shows observed water level, departure from the predicted astronomical tide, Hurricane Barry's NHC best-track position and intensity, timeline playback, direct hourly stepping, and CDT/UTC timestamps. A synchronized five-series chart plots the full hourly water-level history and marks the selected time; clicking or dragging the chart moves the timeline.
 
 ## Data definitions
 
