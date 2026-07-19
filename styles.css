@@ -74,14 +74,15 @@ h1 span { color: #a8becb; font-weight: 450; }
 
 .dashboard {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 2fr) minmax(360px, 1fr);
   gap: 14px;
   padding: 0 14px 14px;
 }
 
 .map-shell {
   position: relative;
-  min-height: calc(100vh - 278px);
+  height: max(520px, calc(100vh - 278px));
+  min-height: 0;
   border: 1px solid var(--line);
   border-radius: 16px;
   overflow: hidden;
@@ -143,15 +144,14 @@ h1 span { color: #a8becb; font-weight: 450; }
 
 .side-panel {
   min-width: 0;
+  height: max(520px, calc(100vh - 278px));
   display: flex;
   flex-direction: column;
   gap: 12px;
-  overflow: auto;
-  max-height: calc(100vh - 278px);
-  scrollbar-color: #2b5366 transparent;
+  overflow: hidden;
 }
 
-.storm-card, .chart-section, .data-notes {
+.storm-card, .chart-section {
   border: 1px solid var(--line);
   border-radius: 14px;
   background: linear-gradient(145deg, rgba(15,38,52,.96), rgba(8,24,34,.98));
@@ -191,7 +191,13 @@ h1 span { color: #a8becb; font-weight: 450; }
 .no-storm { display: grid; place-content: center; min-height: 122px; text-align: center; color: var(--muted); }
 .no-storm strong { color: #d7e4ea; font-size: 1.05rem; margin-bottom: 4px; }
 
-.chart-section { padding: 14px; }
+.chart-section {
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+}
 .section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 h2 { margin: 2px 0 0; font-size: 1rem; }
 .text-button { border: 0; background: transparent; color: var(--cyan); font-size: .7rem; font-weight: 800; cursor: pointer; padding: 6px; }
@@ -209,7 +215,8 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
 
 .water-chart-wrap {
   width: 100%;
-  min-height: 220px;
+  min-height: 0;
+  flex: 1 1 auto;
   border: 1px solid rgba(183,219,239,.1);
   border-radius: 10px;
   overflow: hidden;
@@ -217,9 +224,9 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
   touch-action: none;
 }
 
-#water-chart { display: block; width: 100%; height: auto; min-height: 220px; cursor: crosshair; }
+#water-chart { display: block; width: 100%; height: 100%; min-height: 0; cursor: crosshair; }
 .chart-grid { stroke: rgba(183,219,239,.11); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.chart-axis-label { fill: #6f8b9a; font-size: 8px; font-weight: 700; }
+.chart-axis-label { fill: #6f8b9a; font-size: 9px; font-weight: 700; }
 .chart-series { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 .chart-cursor { stroke: rgba(255,255,255,.72); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
 .chart-point { stroke: #071522; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
@@ -246,11 +253,9 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
 .chart-legend-name small { color: #698594; font-size: .52rem; }
 .chart-legend-value { color: #edf6fa; font-size: .64rem; font-weight: 900; font-variant-numeric: tabular-nums; }
 
-.data-notes { padding: 0 13px; }
-.data-notes summary { cursor: pointer; color: #abc0cc; font-weight: 800; font-size: .72rem; padding: 12px 0; }
-.notes-copy { border-top: 1px solid var(--line); padding: 2px 0 10px; color: #8fa8b6; font-size: .68rem; line-height: 1.5; }
-.notes-copy strong { color: #d5e2e8; }
-.notes-copy a { color: var(--cyan); }
+@media (min-width: 1200px) {
+  .chart-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 14px; }
+}
 
 .timeline-panel {
   margin: 0 14px 14px;
@@ -353,9 +358,15 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
 
 @media (max-width: 980px) {
   .dashboard { grid-template-columns: 1fr; }
-  .map-shell { min-height: 58vh; }
-  .side-panel { max-height: none; display: grid; grid-template-columns: 1fr 1fr; }
-  .data-notes { grid-column: 1 / -1; }
+  .map-shell { height: 58vh; min-height: 420px; }
+  .side-panel {
+    height: auto;
+    overflow: visible;
+    display: grid;
+    grid-template-columns: minmax(260px, .7fr) minmax(0, 1.3fr);
+    align-items: stretch;
+  }
+  .chart-section { min-height: 480px; }
 }
 
 @media (max-width: 680px) {
@@ -363,8 +374,9 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
   h1 span { display: block; margin-top: 4px; }
   .header-badges { display: none; }
   .dashboard { padding: 0 7px 8px; gap: 8px; }
-  .map-shell { min-height: 60vh; border-radius: 12px; }
+  .map-shell { height: 60vh; min-height: 420px; border-radius: 12px; }
   .side-panel { display: flex; }
+  .chart-section { flex: none; min-height: 500px; }
   .time-overlay { top: 8px; min-width: 240px; padding: 7px 11px; }
   .map-legend { left: 7px; bottom: 9px; width: 126px; }
   .station-map-label { min-width: 105px; padding: 5px 6px; }
