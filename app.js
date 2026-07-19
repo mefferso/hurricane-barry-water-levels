@@ -24,6 +24,14 @@
     "Remnant Low": "#a37bd7"
   };
 
+  const stationSeriesColors = {
+    "8761927": "#ff5f73",
+    "8761724": "#f3cf64",
+    "8747437": "#ff8fb1",
+    "8762075": "#ff9f4a",
+    "8762482": "#2ecbb3"
+  };
+
   const els = {
     local: document.getElementById("time-local"),
     utc: document.getElementById("time-utc"),
@@ -32,7 +40,9 @@
     speed: document.getElementById("speed-select"),
     date: document.getElementById("date-input"),
     storm: document.getElementById("storm-card"),
-    gauges: document.getElementById("gauge-cards")
+    chart: document.getElementById("water-chart"),
+    chartLegend: document.getElementById("chart-legend"),
+    chartTime: document.getElementById("chart-time")
   };
 
   const map = L.map("map", {
@@ -121,6 +131,7 @@
   let stormMarker = null;
   let index = nearestIndex(new Date("2019-07-13T15:00:00Z"));
   let timer = null;
+  const chart = buildWaterChart();
 
   function colorForDeparture(value) {
     if (value == null) return "#6d8593";
@@ -266,9 +277,101 @@
       <div class="storm-note">${storm.exact ? "Official best-track fix" : "Hourly interpolation between official fixes"}</div>`;
   }
 
-  function renderGauges(i) {
-    const cards = [];
+  function buildWaterChart() {
+    const size = { width: 320, height: 220, left: 34, right: 9, top: 10, bottom: 26 };
+    const plotWidth = size.width - size.left - size.right;
+    const plotBottom = size.height - size.bottom;
+    const plotHeight = plotBottom - size.top;
+    const observedValues = DATA.stationOrder.flatMap(id =>
+      DATA.stations[id].values.map(row => row[0]).filter(value => value != null)
+    );
+    const yMin = Math.floor((Math.min(...observedValues) - .1) * 2) / 2;
+    const yMax = Math.ceil((Math.max(...observedValues) + .1) * 2) / 2;
+    const x = i => size.left + (i / (times.length - 1)) * plotWidth;
+    const y = value => size.top + ((yMax - value) / (yMax - yMin)) * plotHeight;
+    const yTicks = Array.from({ length: 6 }, (_, i) => yMin + ((yMax - yMin) * i) / 5);
+    const xTicks = [
+      { index: 0, label: "Jul 10", anchor: "start" },
+      { index: 87, label: "Jul 13", anchor: "middle" },
+      { index: 168, label: "Jul 17", anchor: "middle" },
+      { index: times.length - 1, label: "Jul 20", anchor: "end" }
+    ];
 
+    const pathFor = id => {
+      let drawing = false;
+      let path = "";
+      DATA.stations[id].values.forEach((row, i) => {
+        const value = row[0];
+        if (value == null) {
+          drawing = false;
+          return;
+        }
+        path += `${drawing ? " L" : "M"}${x(i).toFixed(2)},${y(value).toFixed(2)}`;
+        drawing = true;
+      });
+      return path;
+    };
+
+    const grid = yTicks.map(value => {
+      const py = y(value);
+      return `<line class="chart-grid" x1="${size.left}" y1="${py}" x2="${size.width - size.right}" y2="${py}"></line><text class="chart-axis-label" x="${size.left - 5}" y="${py + 3}" text-anchor="end">${value.toFixed(1)}</text>`;
+    }).join("");
+
+    const dates = xTicks.map(tick => {
+      const px = x(tick.index);
+      return `<line class="chart-grid" x1="${px}" y1="${size.top}" x2="${px}" y2="${plotBottom}"></line><text class="chart-axis-label" x="${px}" y="${size.height - 8}" text-anchor="${tick.anchor}">${tick.label}</text>`;
+    }).join("");
+
+    const series = DATA.stationOrder.map(id =>
+      `<path class="chart-series" data-series="${id}" d="${pathFor(id)}" stroke="${stationSeriesColors[id]}"></path>`
+    ).join("");
+
+    const points = DATA.stationOrder.map(id =>
+      `<circle class="chart-point" data-point="${id}" r="3.5" fill="${stationSeriesColors[id]}"></circle>`
+    ).join("");
+
+    els.chart.innerHTML = `
+      <defs><clipPath id="water-chart-clip"><rect x="${size.left}" y="${size.top}" width="${plotWidth}" height="${plotHeight}"></rect></clipPath></defs>
+      ${grid}${dates}
+      <g clip-path="url(#water-chart-clip)">${series}<line class="chart-cursor" x1="0" y1="${size.top}" x2="0" y2="${plotBottom}"></line>${points}</g>
+      <rect class="chart-hit-area" x="${size.left}" y="${size.top}" width="${plotWidth}" height="${plotHeight}"></rect>`;
+
+    els.chartLegend.innerHTML = DATA.stationOrder.map(id => {
+      const station = DATA.stations[id];
+      return `<div class="chart-legend-item" style="--series:${stationSeriesColors[id]}"><span class="chart-swatch"></span><span class="chart-legend-name">${station.name} <small>${station.datum}</small></span><strong class="chart-legend-value" data-chart-value="${id}">—</strong></div>`;
+    }).join("");
+
+    let dragging = false;
+    const seekFromPointer = event => {
+      const bounds = els.chart.getBoundingClientRect();
+      const viewX = ((event.clientX - bounds.left) / bounds.width) * size.width;
+      const next = Math.round(((viewX - size.left) / plotWidth) * (times.length - 1));
+      stopPlayback();
+      setIndex(next);
+    };
+
+    els.chart.addEventListener("pointerdown", event => {
+      dragging = true;
+      els.chart.setPointerCapture(event.pointerId);
+      seekFromPointer(event);
+    });
+    els.chart.addEventListener("pointermove", event => {
+      if (dragging) seekFromPointer(event);
+    });
+    els.chart.addEventListener("pointerup", () => { dragging = false; });
+    els.chart.addEventListener("pointercancel", () => { dragging = false; });
+
+    return {
+      x,
+      y,
+      cursor: els.chart.querySelector(".chart-cursor"),
+      points: Object.fromEntries(DATA.stationOrder.map(id => [id, els.chart.querySelector(`[data-point="${id}"]`)])),
+      top: size.top,
+      bottom: plotBottom
+    };
+  }
+
+  function renderGauges(i) {
     DATA.stationOrder.forEach(id => {
       const station = DATA.stations[id];
       const [observed, predicted, departure] = station.values[i];
@@ -286,30 +389,28 @@
         `<strong>${station.name}</strong><br>Observed: ${observed == null ? "missing" : observed.toFixed(2) + " ft " + station.datum}<br>${deltaLabel}: ${signed(departure)} ft${predicted == null ? "" : `<br>Predicted tide: ${predicted.toFixed(2)} ft MHHW`}<br><small>NOAA station ${id}</small>`
       );
 
-      cards.push(
-        `<article class="gauge-card" data-station="${id}" style="--dot:${color}" tabindex="0" role="button" aria-label="Zoom to ${station.name}">
-          <span class="gauge-dot"></span>
-          <div><div class="gauge-name">${station.name}</div><div class="gauge-id">${id} · ${station.datum}${id === "8762482" ? " · baseline anomaly" : ""}</div></div>
-          <div class="gauge-values"><div class="level-value">${observed == null ? "—" : observed.toFixed(2) + " ft"}</div><div class="departure">${signed(departure)} ft Δ</div></div>
-        </article>`
-      );
+      const legendValue = els.chartLegend.querySelector(`[data-chart-value="${id}"]`);
+      legendValue.textContent = observed == null ? "—" : `${observed.toFixed(2)} ft`;
+      const point = chart.points[id];
+      if (observed == null) {
+        point.style.display = "none";
+      } else {
+        point.style.display = "";
+        point.setAttribute("cx", chart.x(i));
+        point.setAttribute("cy", chart.y(observed));
+      }
     });
 
-    els.gauges.innerHTML = cards.join("");
-    els.gauges.querySelectorAll(".gauge-card").forEach(card => {
-      const zoom = () => {
-        const s = DATA.stations[card.dataset.station];
-        map.flyTo([s.lat, s.lon], 9, { duration: .5 });
-        stationMarkers[card.dataset.station].openPopup();
-      };
-      card.addEventListener("click", zoom);
-      card.addEventListener("keydown", event => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          zoom();
-        }
-      });
-    });
+    const cursorX = chart.x(i);
+    chart.cursor.setAttribute("x1", cursorX);
+    chart.cursor.setAttribute("x2", cursorX);
+    els.chartTime.textContent = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Chicago",
+      month: "short",
+      day: "numeric",
+      hour: "numeric"
+    }).format(times[i]);
+    els.chart.setAttribute("aria-label", `Hourly verified water levels for five NOAA gauges. Selected time: ${formatLocal(times[i])}.`);
   }
 
   function render() {
