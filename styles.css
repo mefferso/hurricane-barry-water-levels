@@ -228,6 +228,7 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
 .chart-grid { stroke: rgba(183,219,239,.11); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .chart-axis-label { fill: #6f8b9a; font-size: 9px; font-weight: 700; }
 .chart-series { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.chart-series.is-hidden { display: none; }
 .chart-cursor { stroke: rgba(255,255,255,.72); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
 .chart-point { stroke: #071522; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
 .chart-hit-area { fill: transparent; cursor: ew-resize; }
@@ -240,14 +241,22 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
 
 .chart-legend-item {
   display: grid;
-  grid-template-columns: 9px minmax(0, 1fr) auto;
+  grid-template-columns: 14px 9px minmax(0, 1fr) auto;
   align-items: center;
   gap: 7px;
   min-width: 0;
+  padding: 3px 4px;
+  border-radius: 6px;
   color: #b7cbd6;
   font-size: .61rem;
+  cursor: pointer;
+  transition: opacity .15s, background .15s;
 }
 
+.chart-legend-item:hover { background: rgba(255,255,255,.035); }
+.chart-legend-item.is-muted { opacity: .42; }
+.station-toggle { width: 13px; height: 13px; margin: 0; accent-color: var(--series); cursor: pointer; }
+.station-toggle:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .chart-swatch { width: 8px; height: 3px; border-radius: 999px; background: var(--series); }
 .chart-legend-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chart-legend-name small { color: #698594; font-size: .52rem; }
@@ -302,7 +311,7 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
 
 .station-tooltip, .storm-tooltip {
   width: max-content !important;
-  max-width: 180px;
+  max-width: 220px;
   white-space: normal !important;
   background: transparent !important;
   border: 0 !important;
@@ -315,21 +324,20 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
 .station-map-label {
   display: inline-block;
   width: max-content;
-  max-width: 180px;
-  min-width: 122px;
+  max-width: 220px;
+  min-width: 130px;
   background: rgba(5,17,26,.93);
   border: 1px solid rgba(187,220,236,.28);
   border-radius: 8px;
-  padding: 6px 8px;
+  padding: 7px 9px;
   color: #edf6fa;
   box-shadow: 0 7px 20px rgba(0,0,0,.3);
   backdrop-filter: blur(7px);
 }
 
-.station-map-label .name { font-size: .65rem; font-weight: 900; margin-bottom: 2px; }
-.station-map-label .reading { font-size: .72rem; font-weight: 900; }
-.station-map-label .delta { color: var(--dot); font-size: .6rem; font-weight: 850; margin-left: 4px; }
-.station-map-label .datum { color: #718d9c; font-size: .5rem; margin-top: 1px; }
+.station-map-label .name { font-size: .72rem; font-weight: 900; margin-bottom: 3px; }
+.station-map-label .reading { font-size: .82rem; font-weight: 900; }
+.station-map-label .delta { color: var(--dot); font-size: .68rem; font-weight: 850; margin-left: 5px; }
 
 .storm-map-label {
   display: inline-block;
@@ -379,8 +387,8 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
   .chart-section { flex: none; min-height: 500px; }
   .time-overlay { top: 8px; min-width: 240px; padding: 7px 11px; }
   .map-legend { left: 7px; bottom: 9px; width: 126px; }
-  .station-map-label { min-width: 105px; padding: 5px 6px; }
-  .station-map-label .name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .station-map-label { min-width: 112px; padding: 6px 7px; }
+  .station-map-label .name { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .timeline-panel { margin: 0 7px 7px; padding: 9px; }
   .jump-row { flex-wrap: wrap; }
   .date-jump { order: 3; margin-left: 0; flex: 1 0 70%; }

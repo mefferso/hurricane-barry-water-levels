@@ -128,6 +128,7 @@
     stationMarkers[id] = marker;
   });
 
+  const visibleStations = new Set(DATA.stationOrder);
   let stormMarker = null;
   let index = nearestIndex(new Date("2019-07-13T15:00:00Z"));
   let timer = null;
@@ -332,11 +333,11 @@
     }).join("");
 
     const series = DATA.stationOrder.map(id =>
-      `<path class="chart-series" data-series="${id}" d="${pathFor(id)}" stroke="${stationSeriesColors[id]}"></path>`
+      `<path class="chart-series${visibleStations.has(id) ? "" : " is-hidden"}" data-series="${id}" d="${pathFor(id)}" stroke="${stationSeriesColors[id]}"></path>`
     ).join("");
 
     const points = DATA.stationOrder.map(id =>
-      `<circle class="chart-point" data-point="${id}" r="3.5" fill="${stationSeriesColors[id]}"></circle>`
+      `<circle class="chart-point" data-point="${id}" r="3.5" fill="${stationSeriesColors[id]}"${visibleStations.has(id) ? "" : " style=\"display:none\""}></circle>`
     ).join("");
 
     els.chart.setAttribute("viewBox", `0 0 ${size.width} ${size.height}`);
@@ -348,8 +349,17 @@
 
     els.chartLegend.innerHTML = DATA.stationOrder.map(id => {
       const station = DATA.stations[id];
-      return `<div class="chart-legend-item" style="--series:${stationSeriesColors[id]}"><span class="chart-swatch"></span><span class="chart-legend-name">${station.name} <small>${station.datum}</small></span><strong class="chart-legend-value" data-chart-value="${id}">—</strong></div>`;
+      const checked = visibleStations.has(id);
+      return `<label class="chart-legend-item${checked ? "" : " is-muted"}" data-chart-station="${id}" style="--series:${stationSeriesColors[id]}"><input class="station-toggle" type="checkbox" data-station="${id}"${checked ? " checked" : ""}><span class="chart-swatch"></span><span class="chart-legend-name">${station.name} <small>${station.datum}</small></span><strong class="chart-legend-value" data-chart-value="${id}">—</strong></label>`;
     }).join("");
+
+    els.chartLegend.querySelectorAll(".station-toggle").forEach(toggle => {
+      toggle.addEventListener("change", () => {
+        if (toggle.checked) visibleStations.add(toggle.dataset.station);
+        else visibleStations.delete(toggle.dataset.station);
+        renderGauges(index);
+      });
+    });
 
     let dragging = false;
     const seekFromPointer = event => {
@@ -377,6 +387,7 @@
       measuredWidth,
       measuredHeight,
       cursor: els.chart.querySelector(".chart-cursor"),
+      series: Object.fromEntries(DATA.stationOrder.map(id => [id, els.chart.querySelector(`[data-series="${id}"]`)])),
       points: Object.fromEntries(DATA.stationOrder.map(id => [id, els.chart.querySelector(`[data-point="${id}"]`)])),
       top: size.top,
       bottom: plotBottom
@@ -390,11 +401,15 @@
       const color = colorForDeparture(departure);
       const marker = stationMarkers[id];
       const deltaLabel = id === "8762482" ? "Δ Jul 10 mean" : "Δ normal";
+      const isVisible = visibleStations.has(id);
+
+      if (isVisible && !map.hasLayer(marker)) marker.addTo(map);
+      if (!isVisible && map.hasLayer(marker)) map.removeLayer(marker);
 
       marker.setStyle({ fillColor: color });
       marker.setRadius(8 + Math.min(6, Math.max(0, departure || 0) * 1.8));
       marker.setTooltipContent(
-        `<div class="station-map-label" style="--dot:${color}"><div class="name">${station.name}</div><span class="reading">${observed == null ? "—" : observed.toFixed(2) + " ft"}</span><span class="delta">${signed(departure)} ft</span><div class="datum">${station.datum} · ${deltaLabel}</div></div>`
+        `<div class="station-map-label" style="--dot:${color}"><div class="name">${station.name}</div><span class="reading">${observed == null ? "—" : observed.toFixed(2) + " ft"}</span><span class="delta">${signed(departure)} ft</span></div>`
       );
 
       marker.bindPopup(
@@ -403,8 +418,12 @@
 
       const legendValue = els.chartLegend.querySelector(`[data-chart-value="${id}"]`);
       legendValue.textContent = observed == null ? "—" : `${observed.toFixed(2)} ft`;
+      const legendItem = els.chartLegend.querySelector(`[data-chart-station="${id}"]`);
+      legendItem.classList.toggle("is-muted", !isVisible);
+      legendItem.querySelector(".station-toggle").checked = isVisible;
+      chart.series[id].classList.toggle("is-hidden", !isVisible);
       const point = chart.points[id];
-      if (observed == null) {
+      if (observed == null || !isVisible) {
         point.style.display = "none";
       } else {
         point.style.display = "";
