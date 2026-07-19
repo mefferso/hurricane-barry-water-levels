@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="preconnect" href="https://basemaps.cartocdn.com">
   <link rel="stylesheet" href="leaflet.css?v=1.9.4">
-  <link rel="stylesheet" href="styles.css?v=chart-1">
+  <link rel="stylesheet" href="styles.css?v=layout-2">
 </head>
 <body>
   <header class="site-header">
@@ -57,21 +57,10 @@
           <span id="chart-time"></span>
         </div>
         <div class="water-chart-wrap">
-          <svg id="water-chart" viewBox="0 0 320 220" role="img" aria-label="Hourly verified water levels for five NOAA gauges"></svg>
+          <svg id="water-chart" viewBox="0 0 480 360" role="img" aria-label="Hourly verified water levels for five NOAA gauges"></svg>
         </div>
         <div id="chart-legend" class="chart-legend" aria-label="Gauge values at the selected time"></div>
       </section>
-
-      <details class="data-notes">
-        <summary>Data definitions &amp; sources</summary>
-        <div class="notes-copy">
-          <p><strong>Water level</strong> is the NOAA verified hourly height. Four coastal gauges are feet above MHHW.</p>
-          <p><strong>Departure</strong> is observed minus the NOAA astronomical tide prediction.</p>
-          <p><strong>Bayou Gauche exception:</strong> NOAA does not publish MHHW or tide predictions for station 8762482. It is shown in feet MSL; its anomaly is relative to the July 10 pre-storm mean.</p>
-          <p>Barry's hourly center, wind, and pressure are linearly interpolated between official NHC best-track fixes. The source fixes remain visible as small track dots.</p>
-          <p><a href="https://api.tidesandcurrents.noaa.gov/api/prod/" target="_blank" rel="noopener">NOAA CO-OPS API documentation</a><br><a href="https://www.nhc.noaa.gov/data/tcr/AL022019_Barry.pdf" target="_blank" rel="noopener">NHC Tropical Cyclone Report</a></p>
-        </div>
-      </details>
     </aside>
   </main>
 
@@ -107,6 +96,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="data.js"></script>
-  <script src="app.js?v=chart-1"></script>
+  <script src="app.js?v=layout-2"></script>
 </body>
 </html>
