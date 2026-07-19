@@ -131,7 +131,7 @@
   let stormMarker = null;
   let index = nearestIndex(new Date("2019-07-13T15:00:00Z"));
   let timer = null;
-  const chart = buildWaterChart();
+  let chart = buildWaterChart();
 
   function colorForDeparture(value) {
     if (value == null) return "#6d8593";
@@ -278,7 +278,16 @@
   }
 
   function buildWaterChart() {
-    const size = { width: 320, height: 220, left: 34, right: 9, top: 10, bottom: 26 };
+    const measuredWidth = Math.round(els.chart.clientWidth || 480);
+    const measuredHeight = Math.round(els.chart.clientHeight || 360);
+    const size = {
+      width: Math.max(320, measuredWidth),
+      height: Math.max(260, measuredHeight),
+      left: 38,
+      right: 12,
+      top: 12,
+      bottom: 30
+    };
     const plotWidth = size.width - size.left - size.right;
     const plotBottom = size.height - size.bottom;
     const plotHeight = plotBottom - size.top;
@@ -330,6 +339,7 @@
       `<circle class="chart-point" data-point="${id}" r="3.5" fill="${stationSeriesColors[id]}"></circle>`
     ).join("");
 
+    els.chart.setAttribute("viewBox", `0 0 ${size.width} ${size.height}`);
     els.chart.innerHTML = `
       <defs><clipPath id="water-chart-clip"><rect x="${size.left}" y="${size.top}" width="${plotWidth}" height="${plotHeight}"></rect></clipPath></defs>
       ${grid}${dates}
@@ -350,20 +360,22 @@
       setIndex(next);
     };
 
-    els.chart.addEventListener("pointerdown", event => {
+    els.chart.onpointerdown = event => {
       dragging = true;
       els.chart.setPointerCapture(event.pointerId);
       seekFromPointer(event);
-    });
-    els.chart.addEventListener("pointermove", event => {
+    };
+    els.chart.onpointermove = event => {
       if (dragging) seekFromPointer(event);
-    });
-    els.chart.addEventListener("pointerup", () => { dragging = false; });
-    els.chart.addEventListener("pointercancel", () => { dragging = false; });
+    };
+    els.chart.onpointerup = () => { dragging = false; };
+    els.chart.onpointercancel = () => { dragging = false; };
 
     return {
       x,
       y,
+      measuredWidth,
+      measuredHeight,
       cursor: els.chart.querySelector(".chart-cursor"),
       points: Object.fromEntries(DATA.stationOrder.map(id => [id, els.chart.querySelector(`[data-point="${id}"]`)])),
       top: size.top,
@@ -505,6 +517,37 @@
     }
   });
 
-  window.addEventListener("resize", () => map.invalidateSize());
+  let chartResizeFrame = null;
+  const resizeWaterChart = () => {
+    const nextWidth = Math.round(els.chart.clientWidth);
+    const nextHeight = Math.round(els.chart.clientHeight);
+    if (!nextWidth || !nextHeight) return;
+    if (chart.measuredWidth === nextWidth && chart.measuredHeight === nextHeight) return;
+    chart = buildWaterChart();
+    renderGauges(index);
+  };
+
+  const scheduleChartResize = () => {
+    if (chartResizeFrame) cancelAnimationFrame(chartResizeFrame);
+    chartResizeFrame = requestAnimationFrame(() => {
+      chartResizeFrame = null;
+      resizeWaterChart();
+    });
+  };
+
+  if ("ResizeObserver" in window) {
+    const chartResizeObserver = new ResizeObserver(scheduleChartResize);
+    chartResizeObserver.observe(document.querySelector(".water-chart-wrap"));
+  }
+
+  window.addEventListener("resize", () => {
+    map.invalidateSize();
+    scheduleChartResize();
+  });
+
+  requestAnimationFrame(() => {
+    map.invalidateSize();
+    resizeWaterChart();
+  });
   render();
 })();
