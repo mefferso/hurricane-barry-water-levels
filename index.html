@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="preconnect" href="https://basemaps.cartocdn.com">
   <link rel="stylesheet" href="leaflet.css?v=1.9.4">
-  <link rel="stylesheet" href="styles.css?v=a8fd348">
+  <link rel="stylesheet" href="styles.css?v=chart-1">
 </head>
 <body>
   <header class="site-header">
@@ -44,15 +44,22 @@
     <aside class="side-panel">
       <section id="storm-card" class="storm-card" aria-live="polite"></section>
 
-      <section class="gauge-section">
+      <section class="chart-section">
         <div class="section-heading">
           <div>
-            <div class="eyebrow">HOURLY OBSERVATIONS</div>
-            <h2>Gauge readout</h2>
+            <div class="eyebrow">HOURLY WATER LEVELS</div>
+            <h2>Gauge heights over time</h2>
           </div>
           <button id="reset-view" class="text-button" type="button">Reset map</button>
         </div>
-        <div id="gauge-cards" class="gauge-cards"></div>
+        <div class="chart-subtitle">
+          <span>Verified height (ft)</span>
+          <span id="chart-time"></span>
+        </div>
+        <div class="water-chart-wrap">
+          <svg id="water-chart" viewBox="0 0 320 220" role="img" aria-label="Hourly verified water levels for five NOAA gauges"></svg>
+        </div>
+        <div id="chart-legend" class="chart-legend" aria-label="Gauge values at the selected time"></div>
       </section>
 
       <details class="data-notes">
@@ -100,6 +107,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="data.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=chart-1"></script>
 </body>
 </html>
