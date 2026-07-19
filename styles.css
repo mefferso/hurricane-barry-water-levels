@@ -277,6 +277,9 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
 .keyboard-hint { text-align: right; color: #526d7c; font-size: .54rem; margin-top: 4px; }
 
 .station-tooltip, .storm-tooltip {
+  width: max-content !important;
+  max-width: 180px;
+  white-space: normal !important;
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
@@ -286,6 +289,9 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
 
 .station-tooltip::before, .storm-tooltip::before { display: none !important; }
 .station-map-label {
+  display: inline-block;
+  width: max-content;
+  max-width: 180px;
   min-width: 122px;
   background: rgba(5,17,26,.93);
   border: 1px solid rgba(187,220,236,.28);
@@ -302,6 +308,9 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
 .station-map-label .datum { color: #718d9c; font-size: .5rem; margin-top: 1px; }
 
 .storm-map-label {
+  display: inline-block;
+  width: max-content;
+  max-width: 180px;
   min-width: 145px;
   text-align: center;
   background: rgba(5,17,26,.94);
