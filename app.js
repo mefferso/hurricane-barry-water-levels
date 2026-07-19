@@ -1,0 +1,409 @@
+(() => {
+  "use strict";
+
+  const DATA = window.BARRY_DATA;
+  if (!DATA || !window.L) {
+    document.body.innerHTML = '<p style="padding:2rem;color:white">The map data or mapping library failed to load.</p>';
+    return;
+  }
+
+  const times = DATA.times.map(t => new Date(t));
+  const stationDirections = {
+    "8761927": { direction: "top", offset: [0, -12] },
+    "8761724": { direction: "right", offset: [12, 0] },
+    "8747437": { direction: "right", offset: [12, 0] },
+    "8762075": { direction: "left", offset: [-12, 0] },
+    "8762482": { direction: "left", offset: [-12, 0] }
+  };
+
+  const stageColors = {
+    "Disturbance": "#8296a3",
+    "Tropical Depression": "#3ca7e8",
+    "Tropical Storm": "#f2c84b",
+    "Hurricane": "#ff4d5e",
+    "Remnant Low": "#a37bd7"
+  };
+
+  const els = {
+    local: document.getElementById("time-local"),
+    utc: document.getElementById("time-utc"),
+    slider: document.getElementById("timeline"),
+    play: document.getElementById("play"),
+    speed: document.getElementById("speed-select"),
+    date: document.getElementById("date-input"),
+    storm: document.getElementById("storm-card"),
+    gauges: document.getElementById("gauge-cards")
+  };
+
+  const map = L.map("map", {
+    zoomControl: true,
+    preferCanvas: true,
+    minZoom: 5,
+    maxZoom: 12
+  });
+
+  const coastalView = L.latLngBounds([[27.15, -94.05], [31.2, -86.35]]);
+  map.fitBounds(coastalView, { padding: [16, 16] });
+
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    subdomains: "abcd",
+    maxZoom: 20,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  }).addTo(map);
+
+  L.control.scale({ imperial: true, metric: false }).addTo(map);
+
+  const track = DATA.track.map(p => ({
+    time: new Date(p[0]),
+    lat: p[1],
+    lon: p[2],
+    pressure: p[3],
+    wind: p[4],
+    stage: p[5]
+  }));
+
+  L.polyline(track.map(p => [p.lat, p.lon]), {
+    color: "#9ab0bd",
+    weight: 2,
+    opacity: .42,
+    dashArray: "4 8"
+  }).addTo(map);
+
+  const elapsedTrack = L.polyline([], {
+    color: "#f3c967",
+    weight: 3,
+    opacity: .9
+  }).addTo(map);
+
+  track.forEach(p => {
+    L.circleMarker([p.lat, p.lon], {
+      radius: 2.5,
+      color: "#d6e1e6",
+      fillColor: "#071522",
+      fillOpacity: 1,
+      weight: 1,
+      opacity: .75
+    })
+      .bindTooltip(`${formatUtcShort(p.time)} · ${p.wind} kt`, {
+        direction: "top",
+        opacity: .9
+      })
+      .addTo(map);
+  });
+
+  const stationMarkers = {};
+  DATA.stationOrder.forEach(id => {
+    const station = DATA.stations[id];
+    const opt = stationDirections[id];
+    const marker = L.circleMarker([station.lat, station.lon], {
+      radius: 9,
+      color: "#fff",
+      weight: 2,
+      fillColor: "#6f8795",
+      fillOpacity: .98
+    }).addTo(map);
+
+    marker.bindTooltip("", {
+      permanent: true,
+      direction: opt.direction,
+      offset: L.point(opt.offset),
+      className: "station-tooltip",
+      opacity: 1
+    });
+
+    marker.on("click", () => {
+      map.flyTo([station.lat, station.lon], Math.max(map.getZoom(), 9), { duration: .5 });
+    });
+
+    stationMarkers[id] = marker;
+  });
+
+  let stormMarker = null;
+  let index = nearestIndex(new Date("2019-07-13T15:00:00Z"));
+  let timer = null;
+
+  function colorForDeparture(value) {
+    if (value == null) return "#6d8593";
+    if (value <= 0) return "#4292ff";
+    if (value < .5) return "#24c7a6";
+    if (value < 1) return "#f3d35b";
+    if (value < 2) return "#ff9138";
+    return "#ff4d5e";
+  }
+
+  function signed(value) {
+    if (value == null) return "—";
+    return `${value >= 0 ? "+" : ""}${value.toFixed(2)}`;
+  }
+
+  function formatLocal(date) {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Chicago",
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short"
+    }).format(date);
+  }
+
+  function formatUtc(date) {
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const hour = String(date.getUTCHours()).padStart(2, "0");
+    return `${day}/${hour}00 UTC`;
+  }
+
+  function formatUtcShort(date) {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: "UTC",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    }).format(date) + " UTC";
+  }
+
+  function inputLocalValue(date) {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Chicago",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23"
+    }).formatToParts(date);
+    const part = type => parts.find(p => p.type === type).value;
+    return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
+  }
+
+  function nearestIndex(date) {
+    return Math.max(0, Math.min(times.length - 1, Math.round((date - times[0]) / 3600000)));
+  }
+
+  function stormAt(date) {
+    if (date < track[0].time || date > track[track.length - 1].time) return null;
+
+    let lower = track[0];
+    let upper = track[0];
+    for (let i = 0; i < track.length - 1; i++) {
+      if (date >= track[i].time && date <= track[i + 1].time) {
+        lower = track[i];
+        upper = track[i + 1];
+        break;
+      }
+    }
+
+    const span = upper.time - lower.time;
+    const fraction = span ? (date - lower.time) / span : 0;
+    const lerp = (a, b) => a + (b - a) * fraction;
+
+    return {
+      lat: lerp(lower.lat, upper.lat),
+      lon: lerp(lower.lon, upper.lon),
+      pressure: Math.round(lerp(lower.pressure, upper.pressure)),
+      wind: Math.round(lerp(lower.wind, upper.wind)),
+      stage: fraction === 1 ? upper.stage : lower.stage,
+      exact: fraction === 0 || fraction === 1
+    };
+  }
+
+  function renderStorm(date) {
+    const storm = stormAt(date);
+
+    if (stormMarker) {
+      map.removeLayer(stormMarker);
+      stormMarker = null;
+    }
+
+    const elapsed = track.filter(p => p.time <= date).map(p => [p.lat, p.lon]);
+    if (storm) elapsed.push([storm.lat, storm.lon]);
+    elapsedTrack.setLatLngs(elapsed);
+
+    if (!storm) {
+      const before = date < track[0].time;
+      els.storm.innerHTML = `<div class="no-storm"><strong>${before ? "Before Barry's best track" : "Barry no longer tracked"}</strong><span>${before ? "First NHC best-track point: Jul 10 at 1200 UTC" : "The remnant low dissipated on Jul 16"}</span></div>`;
+      return;
+    }
+
+    const stageColor = stageColors[storm.stage] || "#8096a3";
+    const icon = L.divIcon({
+      className: "",
+      html: `<div class="storm-dot" style="--stage:${stageColor}"></div>`,
+      iconSize: [22, 22],
+      iconAnchor: [11, 11]
+    });
+
+    stormMarker = L.marker([storm.lat, storm.lon], {
+      icon,
+      zIndexOffset: 1000
+    }).addTo(map);
+
+    stormMarker.bindTooltip(
+      `<div class="storm-map-label" style="--stage:${stageColor}"><strong>Barry · ${storm.wind} kt</strong><span>${Math.round(storm.wind * 1.15078)} mph · ${storm.pressure} mb</span></div>`,
+      {
+        permanent: true,
+        direction: "top",
+        offset: [0, -13],
+        className: "storm-tooltip",
+        opacity: 1
+      }
+    );
+
+    els.storm.innerHTML = `
+      <div class="storm-top">
+        <div><div class="eyebrow">NHC BEST TRACK</div><div class="storm-name">Barry</div></div>
+        <span class="stage-pill" style="--stage:${stageColor}">${storm.stage}</span>
+      </div>
+      <div class="storm-metrics">
+        <div class="metric"><strong>${storm.wind} kt</strong><span>${Math.round(storm.wind * 1.15078)} mph</span></div>
+        <div class="metric"><strong>${storm.pressure}</strong><span>minimum mb</span></div>
+        <div class="metric"><strong>${storm.lat.toFixed(1)}°N</strong><span>${Math.abs(storm.lon).toFixed(1)}°W</span></div>
+      </div>
+      <div class="storm-note">${storm.exact ? "Official best-track fix" : "Hourly interpolation between official fixes"}</div>`;
+  }
+
+  function renderGauges(i) {
+    const cards = [];
+
+    DATA.stationOrder.forEach(id => {
+      const station = DATA.stations[id];
+      const [observed, predicted, departure] = station.values[i];
+      const color = colorForDeparture(departure);
+      const marker = stationMarkers[id];
+      const deltaLabel = id === "8762482" ? "Δ Jul 10 mean" : "Δ normal";
+
+      marker.setStyle({ fillColor: color });
+      marker.setRadius(8 + Math.min(6, Math.max(0, departure || 0) * 1.8));
+      marker.setTooltipContent(
+        `<div class="station-map-label" style="--dot:${color}"><div class="name">${station.name}</div><span class="reading">${observed == null ? "—" : observed.toFixed(2) + " ft"}</span><span class="delta">${signed(departure)} ft</span><div class="datum">${station.datum} · ${deltaLabel}</div></div>`
+      );
+
+      marker.bindPopup(
+        `<strong>${station.name}</strong><br>Observed: ${observed == null ? "missing" : observed.toFixed(2) + " ft " + station.datum}<br>${deltaLabel}: ${signed(departure)} ft${predicted == null ? "" : `<br>Predicted tide: ${predicted.toFixed(2)} ft MHHW`}<br><small>NOAA station ${id}</small>`
+      );
+
+      cards.push(
+        `<article class="gauge-card" data-station="${id}" style="--dot:${color}" tabindex="0" role="button" aria-label="Zoom to ${station.name}">
+          <span class="gauge-dot"></span>
+          <div><div class="gauge-name">${station.name}</div><div class="gauge-id">${id} · ${station.datum}${id === "8762482" ? " · baseline anomaly" : ""}</div></div>
+          <div class="gauge-values"><div class="level-value">${observed == null ? "—" : observed.toFixed(2) + " ft"}</div><div class="departure">${signed(departure)} ft Δ</div></div>
+        </article>`
+      );
+    });
+
+    els.gauges.innerHTML = cards.join("");
+    els.gauges.querySelectorAll(".gauge-card").forEach(card => {
+      const zoom = () => {
+        const s = DATA.stations[card.dataset.station];
+        map.flyTo([s.lat, s.lon], 9, { duration: .5 });
+        stationMarkers[card.dataset.station].openPopup();
+      };
+      card.addEventListener("click", zoom);
+      card.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          zoom();
+        }
+      });
+    });
+  }
+
+  function render() {
+    const date = times[index];
+    els.local.textContent = formatLocal(date);
+    els.utc.textContent = formatUtc(date);
+    els.slider.value = index;
+    els.date.value = inputLocalValue(date);
+    renderStorm(date);
+    renderGauges(index);
+
+    document.querySelectorAll(".jump-button").forEach(button => button.classList.remove("active"));
+    if (index === 0) document.getElementById("jump-start").classList.add("active");
+    if (date.getTime() === new Date("2019-07-13T15:00:00Z").getTime()) {
+      document.getElementById("jump-landfall").classList.add("active");
+    }
+  }
+
+  function setIndex(next) {
+    index = Math.max(0, Math.min(times.length - 1, next));
+    render();
+    if (index === times.length - 1 && timer) stopPlayback();
+  }
+
+  function stopPlayback() {
+    clearInterval(timer);
+    timer = null;
+    els.play.classList.remove("playing");
+    els.play.innerHTML = '<span aria-hidden="true">▶</span>';
+    els.play.setAttribute("aria-label", "Play timeline");
+  }
+
+  function startPlayback() {
+    if (index === times.length - 1) index = 0;
+    timer = setInterval(() => setIndex(index + 1), Number(els.speed.value));
+    els.play.classList.add("playing");
+    els.play.innerHTML = '<span aria-hidden="true">Ⅱ</span>';
+    els.play.setAttribute("aria-label", "Pause timeline");
+  }
+
+  function togglePlayback() {
+    timer ? stopPlayback() : startPlayback();
+  }
+
+  document.getElementById("back-6").addEventListener("click", () => setIndex(index - 6));
+  document.getElementById("back-1").addEventListener("click", () => setIndex(index - 1));
+  document.getElementById("forward-1").addEventListener("click", () => setIndex(index + 1));
+  document.getElementById("forward-6").addEventListener("click", () => setIndex(index + 6));
+  document.getElementById("jump-start").addEventListener("click", () => setIndex(0));
+  document.getElementById("jump-landfall").addEventListener("click", () => {
+    setIndex(nearestIndex(new Date("2019-07-13T15:00:00Z")));
+  });
+  document.getElementById("reset-view").addEventListener("click", () => {
+    map.fitBounds(coastalView, { padding: [16, 16] });
+  });
+
+  els.slider.addEventListener("input", event => {
+    stopPlayback();
+    setIndex(Number(event.target.value));
+  });
+
+  els.play.addEventListener("click", togglePlayback);
+
+  els.speed.addEventListener("change", () => {
+    if (timer) {
+      stopPlayback();
+      startPlayback();
+    }
+  });
+
+  els.date.addEventListener("change", event => {
+    if (!event.target.value) return;
+    stopPlayback();
+    setIndex(nearestIndex(new Date(event.target.value + ":00-05:00")));
+  });
+
+  document.addEventListener("keydown", event => {
+    if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      stopPlayback();
+      setIndex(index - (event.shiftKey ? 6 : 1));
+    }
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      stopPlayback();
+      setIndex(index + (event.shiftKey ? 6 : 1));
+    }
+    if (event.key === " ") {
+      event.preventDefault();
+      togglePlayback();
+    }
+  });
+
+  window.addEventListener("resize", () => map.invalidateSize());
+  render();
+})();

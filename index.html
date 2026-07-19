@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071522">
+  <meta name="description" content="Interactive reconstruction of Hurricane Barry and hourly coastal water levels, July 10–20, 2019.">
+  <title>Hurricane Barry Water-Level Timeline</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://basemaps.cartocdn.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynhWWNJeaMZrYpZ2rEPsR5hRz4v0=" crossorigin="">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="title-block">
+      <div class="eyebrow">HISTORICAL EVENT RECONSTRUCTION · JULY 2019</div>
+      <h1>Hurricane Barry <span>Water-Level Timeline</span></h1>
+    </div>
+    <div class="header-badges" aria-label="Data summary">
+      <span>5 gauges</span><span>264 hours</span><span>NOAA verified</span>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <section class="map-shell" aria-label="Interactive map">
+      <div id="map"></div>
+      <div class="time-overlay" aria-live="polite">
+        <div id="time-local" class="time-local"></div>
+        <div id="time-utc" class="time-utc"></div>
+      </div>
+      <div class="map-legend" aria-label="Departure from normal legend">
+        <div class="legend-title">Departure from normal</div>
+        <div class="legend-scale">
+          <span style="--c:#4292ff">≤ 0</span>
+          <span style="--c:#24c7a6">0–0.5</span>
+          <span style="--c:#f3d35b">0.5–1</span>
+          <span style="--c:#ff9138">1–2</span>
+          <span style="--c:#ff4d5e">≥ 2 ft</span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side-panel">
+      <section id="storm-card" class="storm-card" aria-live="polite"></section>
+
+      <section class="gauge-section">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">HOURLY OBSERVATIONS</div>
+            <h2>Gauge readout</h2>
+          </div>
+          <button id="reset-view" class="text-button" type="button">Reset map</button>
+        </div>
+        <div id="gauge-cards" class="gauge-cards"></div>
+      </section>
+
+      <details class="data-notes">
+        <summary>Data definitions &amp; sources</summary>
+        <div class="notes-copy">
+          <p><strong>Water level</strong> is the NOAA verified hourly height. Four coastal gauges are feet above MHHW.</p>
+          <p><strong>Departure</strong> is observed minus the NOAA astronomical tide prediction.</p>
+          <p><strong>Bayou Gauche exception:</strong> NOAA does not publish MHHW or tide predictions for station 8762482. It is shown in feet MSL; its anomaly is relative to the July 10 pre-storm mean.</p>
+          <p>Barry's hourly center, wind, and pressure are linearly interpolated between official NHC best-track fixes. The source fixes remain visible as small track dots.</p>
+          <p><a href="https://api.tidesandcurrents.noaa.gov/api/prod/" target="_blank" rel="noopener">NOAA CO-OPS API documentation</a><br><a href="https://www.nhc.noaa.gov/data/tcr/AL022019_Barry.pdf" target="_blank" rel="noopener">NHC Tropical Cyclone Report</a></p>
+        </div>
+      </details>
+    </aside>
+  </main>
+
+  <section class="timeline-panel" aria-label="Timeline controls">
+    <div class="jump-row">
+      <button id="jump-start" class="jump-button" type="button">Start</button>
+      <button id="jump-landfall" class="jump-button active" type="button">Landfall</button>
+      <label class="date-jump">Jump to (CDT)
+        <input id="date-input" type="datetime-local" min="2019-07-09T19:00" max="2019-07-20T18:00" step="3600">
+      </label>
+      <label class="speed-control">Playback
+        <select id="speed-select">
+          <option value="900">1×</option>
+          <option value="500" selected>2×</option>
+          <option value="250">4×</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="transport-row">
+      <button id="back-6" class="transport" type="button" aria-label="Back 6 hours">−6h</button>
+      <button id="back-1" class="transport" type="button" aria-label="Back 1 hour">−1h</button>
+      <button id="play" class="play-button" type="button" aria-label="Play timeline"><span aria-hidden="true">▶</span></button>
+      <button id="forward-1" class="transport" type="button" aria-label="Forward 1 hour">+1h</button>
+      <button id="forward-6" class="transport" type="button" aria-label="Forward 6 hours">+6h</button>
+      <div class="range-wrap">
+        <input id="timeline" type="range" min="0" max="263" step="1" value="87" aria-label="Hourly timeline">
+        <div class="range-labels"><span>Jul 10</span><span>Jul 13 landfall</span><span>Jul 20</span></div>
+      </div>
+    </div>
+    <div class="keyboard-hint">←/→ one hour · Shift + ←/→ six hours · Space play/pause</div>
+  </section>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
