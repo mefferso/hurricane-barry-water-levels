@@ -151,7 +151,7 @@ h1 span { color: #a8becb; font-weight: 450; }
   scrollbar-color: #2b5366 transparent;
 }
 
-.storm-card, .gauge-section, .data-notes {
+.storm-card, .chart-section, .data-notes {
   border: 1px solid var(--line);
   border-radius: 14px;
   background: linear-gradient(145deg, rgba(15,38,52,.96), rgba(8,24,34,.98));
@@ -191,41 +191,60 @@ h1 span { color: #a8becb; font-weight: 450; }
 .no-storm { display: grid; place-content: center; min-height: 122px; text-align: center; color: var(--muted); }
 .no-storm strong { color: #d7e4ea; font-size: 1.05rem; margin-bottom: 4px; }
 
-.gauge-section { padding: 14px; }
+.chart-section { padding: 14px; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 h2 { margin: 2px 0 0; font-size: 1rem; }
 .text-button { border: 0; background: transparent; color: var(--cyan); font-size: .7rem; font-weight: 800; cursor: pointer; padding: 6px; }
 .text-button:hover { color: white; }
 
-.gauge-cards { display: grid; gap: 7px; }
-.gauge-card {
-  --dot: #6a8797;
-  display: grid;
-  grid-template-columns: 10px minmax(0, 1fr) auto;
-  gap: 9px;
-  align-items: center;
-  padding: 9px;
-  background: rgba(255,255,255,.025);
-  border: 1px solid rgba(183,219,239,.095);
+.chart-subtitle {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: -3px 0 3px;
+  color: #7894a4;
+  font-size: .58rem;
+  font-weight: 750;
+}
+
+.water-chart-wrap {
+  width: 100%;
+  min-height: 220px;
+  border: 1px solid rgba(183,219,239,.1);
   border-radius: 10px;
-  transition: border-color .2s, background .2s;
-  cursor: pointer;
+  overflow: hidden;
+  background: rgba(3,14,22,.42);
+  touch-action: none;
 }
 
-.gauge-card:hover, .gauge-card:focus-visible { background: rgba(255,255,255,.05); border-color: rgba(85,214,232,.35); outline: none; }
-.gauge-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--dot);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dot) 20%, transparent);
+#water-chart { display: block; width: 100%; height: auto; min-height: 220px; cursor: crosshair; }
+.chart-grid { stroke: rgba(183,219,239,.11); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.chart-axis-label { fill: #6f8b9a; font-size: 8px; font-weight: 700; }
+.chart-series { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.chart-cursor { stroke: rgba(255,255,255,.72); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
+.chart-point { stroke: #071522; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.chart-hit-area { fill: transparent; cursor: ew-resize; }
+
+.chart-legend {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
 }
 
-.gauge-name { font-size: .74rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.gauge-id { color: #718c9c; font-size: .57rem; margin-top: 1px; }
-.gauge-values { text-align: right; }
-.level-value { font-size: .8rem; font-weight: 900; }
-.departure { font-size: .62rem; color: var(--dot); font-weight: 850; }
+.chart-legend-item {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  color: #b7cbd6;
+  font-size: .61rem;
+}
+
+.chart-swatch { width: 8px; height: 3px; border-radius: 999px; background: var(--series); }
+.chart-legend-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chart-legend-name small { color: #698594; font-size: .52rem; }
+.chart-legend-value { color: #edf6fa; font-size: .64rem; font-weight: 900; font-variant-numeric: tabular-nums; }
 
 .data-notes { padding: 0 13px; }
 .data-notes summary { cursor: pointer; color: #abc0cc; font-weight: 800; font-size: .72rem; padding: 12px 0; }
