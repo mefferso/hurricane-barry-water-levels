@@ -238,10 +238,75 @@ h1 .viewer-title { color: #a8becb; font-weight: 450; }
   flex-direction: column;
   padding: 14px;
 }
-.section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 h2 { margin: 2px 0 0; font-size: 1rem; }
 .text-button { border: 0; background: transparent; color: var(--cyan); font-size: .7rem; font-weight: 800; cursor: pointer; padding: 6px; }
 .text-button:hover { color: white; }
+
+.chart-window-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.chart-window-select {
+  display: grid;
+  gap: 2px;
+  color: #7894a4;
+  font-size: .55rem;
+  font-weight: 850;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.chart-window-select select {
+  min-width: 82px;
+  color: #d9e7ed;
+  background: #0b202e;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 22px 4px 7px;
+  color-scheme: dark;
+  cursor: pointer;
+  font-size: .62rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.chart-window-actions { display: flex; gap: 4px; }
+.chart-window-button {
+  min-height: 25px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 7px;
+  background: rgba(255,255,255,.025);
+  color: #9fb7c4;
+  cursor: pointer;
+  font-size: .57rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.chart-window-button.reset { color: var(--cyan); }
+.chart-window-button:hover:not(:disabled),
+.chart-window-button:focus-visible,
+.chart-window-select select:focus-visible {
+  border-color: rgba(85,214,232,.6);
+  color: white;
+  outline: none;
+}
+.chart-window-button:disabled { opacity: .32; cursor: default; }
+.chart-range {
+  margin-left: auto;
+  align-self: center;
+  color: #91aab7;
+  font-size: .57rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
 
 .chart-subtitle {
   display: flex;
@@ -270,6 +335,7 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
 .chart-series { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 .chart-series.is-hidden { display: none; }
 .chart-cursor { stroke: rgba(255,255,255,.72); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
+.chart-cursor.is-hidden { display: none; }
 .chart-point { stroke: #071522; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
 .chart-point.is-hidden { display: none; }
 .chart-hit-area { fill: transparent; cursor: ew-resize; }
@@ -460,6 +526,9 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
   .map-shell { height: 60vh; min-height: 420px; border-radius: 12px; }
   .side-panel { display: flex; }
   .chart-section { flex: none; min-height: 500px; }
+  .chart-window-toolbar { align-items: flex-end; }
+  .chart-window-actions { margin-left: auto; }
+  .chart-range { width: 100%; margin-left: 0; text-align: right; }
   .time-overlay { top: 8px; min-width: 240px; padding: 7px 11px; }
   .map-legend { left: 7px; bottom: 9px; width: 126px; }
   .station-map-label { min-width: 112px; padding: 6px 7px; }

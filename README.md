@@ -13,6 +13,8 @@ Changing the storm rebuilds the track, elapsed-track line, storm marker, gauge m
 
 Each available gauge has an independent visibility checkbox. Turning a gauge off hides its map marker and permanent label, full chart series, and highlighted current-hour chart point. **All** and **None** provide shortcuts; any individual combination remains supported.
 
+The lower timeline always covers the storm's complete configured event period. The chart has a separate viewport that can show the full event or a 7-day, 5-day, 3-day, or 48-hour interval. **Earlier** and **Later** pan that chart-only window without moving the storm reconstruction; **Reset plot** restores the selected storm's configured default. Barry defaults to its full event, while Ida defaults to a five-day window centered on landfall. Moving the main timeline beyond the visible chart range automatically pans the limited chart window enough to include the selected hour.
+
 The chart and timeline support:
 
 - hourly slider movement and chart dragging
@@ -22,6 +24,7 @@ The chart and timeline support:
 - local date/time jumping
 - left/right keyboard movement, Shift+left/right six-hour movement, and spacebar playback
 - dynamically generated date ticks and storm-specific Y-axis scaling
+- chart-window Y-axis rescaling based only on visible hours and enabled gauges
 
 ## Repository structure
 
@@ -38,7 +41,7 @@ index.html           Static application shell
 styles.css           Shared responsive design
 ```
 
-Each generated storm file uses the same schema and registers itself in `window.STORM_DATASETS`. The full downloaded analysis window remains in the dataset. `metadata.eventWindow.displayStart` and `displayEnd` determine the normal interactive timeline.
+Each generated storm file uses the same schema and registers itself in `window.STORM_DATASETS`. The full downloaded analysis window remains in the dataset. `metadata.eventWindow.displayStart` and `displayEnd` determine the normal interactive timeline. The browser catalog's optional `defaultChartWindowHours` only controls the chart viewport and never shortens the event timeline or source arrays.
 
 ## Data definitions
 
@@ -112,9 +115,9 @@ The builder:
 
 ## Add another storm
 
-1. Add a storm entry to `scripts/storms.json` with its unique ID, Atlantic basin ID, official UTC landfall time, title, local timezone, map bounds, and source links.
+1. Add a storm entry to `scripts/storms.json` with its unique ID, Atlantic basin ID, official UTC landfall time, title, local timezone, map bounds, optional `default_chart_window_hours`, and source links.
 2. Add or override station configuration only when its datum, prediction support, label direction, or baseline method differs.
-3. Add the storm to the small browser catalog in `data/storms.js`.
+3. Add the storm to the small browser catalog in `data/storms.js`, including an optional `defaultChartWindowHours` (`null` means the full event).
 4. Add the generated script tag to `index.html`.
 5. Run `python3 scripts/build_storm_data.py --storm <storm-id>`.
 6. Review every warning and document material outages or datum limitations here.
