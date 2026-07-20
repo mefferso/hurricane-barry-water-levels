@@ -21,6 +21,13 @@ window.STORM_CATALOG = [
     "dataFile": "data/sally-2020.js"
   },
   {
+    "id": "zeta-2020",
+    "name": "Hurricane Zeta",
+    "year": 2020,
+    "defaultChartWindowHours": 120,
+    "dataFile": "data/zeta-2020.js"
+  },
+  {
     "id": "barry-2019",
     "name": "Hurricane Barry",
     "year": 2019,
