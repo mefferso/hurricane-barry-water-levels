@@ -1,5 +1,12 @@
 window.STORM_CATALOG = [
   {
+    "id": "francine-2024",
+    "name": "Hurricane Francine",
+    "year": 2024,
+    "defaultChartWindowHours": 120,
+    "dataFile": "data/francine-2024.js"
+  },
+  {
     "id": "ida-2021",
     "name": "Hurricane Ida",
     "year": 2021,
