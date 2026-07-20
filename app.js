@@ -39,6 +39,11 @@
     chart: document.getElementById("water-chart"),
     chartLegend: document.getElementById("chart-legend"),
     chartTime: document.getElementById("chart-time"),
+    chartRange: document.getElementById("chart-range"),
+    chartWindowSelect: document.getElementById("chart-window-select"),
+    chartEarlier: document.getElementById("chart-earlier"),
+    chartLater: document.getElementById("chart-later"),
+    resetChartWindow: document.getElementById("reset-chart-window"),
     showAllStations: document.getElementById("show-all-stations"),
     hideAllStations: document.getElementById("hide-all-stations"),
     rangeStart: document.getElementById("range-start"),
@@ -73,6 +78,11 @@
   let index = 0;
   let timer = null;
   let chart = null;
+  let stormConfig = null;
+  let chartStartIndex = 0;
+  let chartEndIndex = 0;
+  let chartWindowHours = null;
+  let chartYScale = null;
 
   function colorForDeparture(value) {
     if (value == null) return "#6d8593";
@@ -116,6 +126,20 @@
       month: "short",
       day: "numeric"
     }).format(value);
+  }
+
+  function formatDateTimeTick(value) {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: data.metadata.localTimezone,
+      month: "short",
+      day: "numeric",
+      hour: "numeric"
+    }).format(value).replace(", ", " ");
+  }
+
+  function formatChartRange() {
+    const formatter = chartWindowHours != null && chartWindowHours <= 48 ? formatDateTimeTick : formatDateTick;
+    return `${formatter(times[chartStartIndex])} – ${formatter(times[chartEndIndex])}`;
   }
 
   function formatUtc(value) {
@@ -198,6 +222,10 @@
     trackLayer = null;
     elapsedTrack = null;
     stationMarkers = {};
+    els.chart.onpointerdown = null;
+    els.chart.onpointermove = null;
+    els.chart.onpointerup = null;
+    els.chart.onpointercancel = null;
     els.chart.replaceChildren();
     els.chartLegend.replaceChildren();
     chart = null;
@@ -237,6 +265,78 @@
     els.rangeStart.textContent = formatDateTick(times[0]);
     els.rangeLandfall.textContent = `${formatDateTick(landfall)} landfall`;
     els.rangeEnd.textContent = formatDateTick(times[times.length - 1]);
+  }
+
+  function normalizedChartWindowHours(value) {
+    if (value == null || value === "full") return null;
+    const hours = Number(value);
+    const fullSpan = Math.max(0, times.length - 1);
+    if (!Number.isFinite(hours) || hours <= 0 || hours >= fullSpan) return null;
+    return Math.round(hours);
+  }
+
+  function configureChartWindow(hours, centerIndex) {
+    const last = Math.max(0, times.length - 1);
+    chartWindowHours = normalizedChartWindowHours(hours);
+    if (chartWindowHours == null) {
+      chartStartIndex = 0;
+      chartEndIndex = last;
+      return;
+    }
+    const span = Math.min(chartWindowHours, last);
+    chartStartIndex = Math.max(0, Math.min(last - span, Math.round(centerIndex - span / 2)));
+    chartEndIndex = chartStartIndex + span;
+  }
+
+  function updateChartWindowControls() {
+    els.chartWindowSelect.value = chartWindowHours == null ? "full" : String(chartWindowHours);
+    els.chartEarlier.disabled = chartStartIndex <= 0;
+    els.chartLater.disabled = chartEndIndex >= times.length - 1;
+    els.chartRange.textContent = formatChartRange();
+  }
+
+  function rebuildWaterChart() {
+    chart = buildWaterChart();
+    updateChartWindowControls();
+    renderGauges(index);
+  }
+
+  function resetChartWindow() {
+    stopPlayback();
+    const landfallIndex = nearestIndex(new Date(data.metadata.landfallTime));
+    configureChartWindow(stormConfig?.defaultChartWindowHours ?? data.metadata.defaultChartWindowHours ?? null, landfallIndex);
+    rebuildWaterChart();
+  }
+
+  function shiftChartWindow(direction) {
+    if (chartWindowHours == null) return;
+    stopPlayback();
+    const last = times.length - 1;
+    const span = chartEndIndex - chartStartIndex;
+    const shift = Math.max(1, Math.round(span * .25)) * direction;
+    const nextStart = Math.max(0, Math.min(last - span, chartStartIndex + shift));
+    if (nextStart === chartStartIndex) return;
+    chartStartIndex = nextStart;
+    chartEndIndex = nextStart + span;
+    rebuildWaterChart();
+  }
+
+  function ensureChartContainsIndex(targetIndex) {
+    if (chartWindowHours == null) return false;
+    const last = times.length - 1;
+    const span = chartEndIndex - chartStartIndex;
+    const buffer = Math.max(1, Math.round(span * .1));
+    let nextStart = chartStartIndex;
+    if (targetIndex <= chartStartIndex && chartStartIndex > 0) {
+      nextStart = targetIndex - buffer;
+    } else if (targetIndex >= chartEndIndex && chartEndIndex < last) {
+      nextStart = targetIndex - (span - buffer);
+    }
+    nextStart = Math.max(0, Math.min(last - span, nextStart));
+    if (nextStart === chartStartIndex) return false;
+    chartStartIndex = nextStart;
+    chartEndIndex = nextStart + span;
+    return true;
   }
 
   function buildTrackLayers() {
@@ -303,6 +403,7 @@
     stopPlayback();
     cleanupStormLayers();
     data = nextData;
+    stormConfig = CATALOG.find(storm => storm.id === data.metadata.id) || null;
     configureActiveWindow(data);
     track = data.track.map(point => ({
       time: new Date(point[0]),
@@ -315,13 +416,16 @@
     }));
     stationColors = Object.fromEntries(data.stationOrder.map((id, i) => [id, seriesPalette[i % seriesPalette.length]]));
     visibleStations = new Set(data.stationOrder.filter(id => data.stations[id].available));
+    chartYScale = null;
     updateHeader();
     configureTimeline();
     map.fitBounds(L.latLngBounds(data.metadata.mapBounds), { padding: [16, 16] });
     buildTrackLayers();
     buildStationMarkers();
-    chart = buildWaterChart();
     index = nearestIndex(new Date(data.metadata.landfallTime));
+    configureChartWindow(stormConfig?.defaultChartWindowHours ?? data.metadata.defaultChartWindowHours ?? null, index);
+    chart = buildWaterChart();
+    updateChartWindowControls();
     render();
     if (updateUrl) {
       const url = new URL(window.location.href);
@@ -395,15 +499,50 @@
       <div class="storm-note">${storm.exact ? "Official best-track fix" : "Hourly interpolation between official fixes"}</div>`;
   }
 
-  function dynamicChartTicks() {
-    const last = times.length - 1;
-    const landfall = nearestIndex(new Date(data.metadata.landfallTime));
-    const candidates = [0, landfall, Math.round((landfall + last) / 2), last];
+  function dynamicChartTicks(measuredWidth) {
+    const span = chartEndIndex - chartStartIndex;
+    const tickCount = measuredWidth < 390 ? 4 : 5;
+    const formatter = span <= 72 ? formatDateTimeTick : formatDateTick;
+    const candidates = Array.from({ length: tickCount }, (_, position) =>
+      Math.round(chartStartIndex + (span * position) / Math.max(1, tickCount - 1))
+    );
     return [...new Set(candidates)].sort((a, b) => a - b).map((tick, position, list) => ({
       index: tick,
-      label: formatDateTick(times[tick]),
+      label: formatter(times[tick]),
       anchor: position === 0 ? "start" : position === list.length - 1 ? "end" : "middle"
     }));
+  }
+
+  function valuesInChartWindow(stationIds) {
+    const values = [];
+    stationIds.forEach(id => {
+      for (let i = chartStartIndex; i <= chartEndIndex; i++) {
+        const value = activeValues[id][i][0];
+        if (value != null) values.push(value);
+      }
+    });
+    return values;
+  }
+
+  function calculateChartYScale() {
+    const visibleIds = data.stationOrder.filter(id => data.stations[id].available && visibleStations.has(id));
+    let observedValues = valuesInChartWindow(visibleIds);
+    if (!observedValues.length && chartYScale) return chartYScale;
+    if (!observedValues.length) {
+      observedValues = valuesInChartWindow(data.stationOrder.filter(id => data.stations[id].available));
+    }
+    if (!observedValues.length) {
+      chartYScale = { yMin: -1, yMax: 1 };
+      return chartYScale;
+    }
+    const rawMin = Math.min(...observedValues);
+    const rawMax = Math.max(...observedValues);
+    const padding = Math.max(.2, (rawMax - rawMin) * .08);
+    const yMin = Math.floor((rawMin - padding) * 2) / 2;
+    let yMax = Math.ceil((rawMax + padding) * 2) / 2;
+    if (yMax <= yMin) yMax = yMin + 1;
+    chartYScale = { yMin, yMax };
+    return chartYScale;
   }
 
   function buildWaterChart() {
@@ -420,27 +559,24 @@
     const plotWidth = size.width - size.left - size.right;
     const plotBottom = size.height - size.bottom;
     const plotHeight = plotBottom - size.top;
-    const observedValues = data.stationOrder.flatMap(id => activeValues[id].map(row => row[0]).filter(value => value != null));
-    const rawMin = observedValues.length ? Math.min(...observedValues) : -1;
-    const rawMax = observedValues.length ? Math.max(...observedValues) : 1;
-    const yMin = Math.floor((rawMin - .1) * 2) / 2;
-    const yMax = Math.ceil((rawMax + .1) * 2) / 2 || yMin + 1;
-    const x = i => size.left + (i / Math.max(1, times.length - 1)) * plotWidth;
+    const { yMin, yMax } = calculateChartYScale();
+    const chartSpan = Math.max(1, chartEndIndex - chartStartIndex);
+    const x = i => size.left + ((i - chartStartIndex) / chartSpan) * plotWidth;
     const y = value => size.top + ((yMax - value) / (yMax - yMin)) * plotHeight;
     const yTicks = Array.from({ length: 6 }, (_, i) => yMin + ((yMax - yMin) * i) / 5);
 
     const pathFor = id => {
       let drawing = false;
       let path = "";
-      activeValues[id].forEach((row, i) => {
-        const value = row[0];
+      for (let i = chartStartIndex; i <= chartEndIndex; i++) {
+        const value = activeValues[id][i][0];
         if (value == null) {
           drawing = false;
-          return;
+          continue;
         }
         path += `${drawing ? " L" : "M"}${x(i).toFixed(2)},${y(value).toFixed(2)}`;
         drawing = true;
-      });
+      }
       return path;
     };
 
@@ -448,7 +584,7 @@
       const py = y(value);
       return `<line class="chart-grid" x1="${size.left}" y1="${py}" x2="${size.width - size.right}" y2="${py}"></line><text class="chart-axis-label" x="${size.left - 5}" y="${py + 3}" text-anchor="end">${value.toFixed(1)}</text>`;
     }).join("");
-    const dates = dynamicChartTicks().map(tick => {
+    const dates = dynamicChartTicks(size.width).map(tick => {
       const px = x(tick.index);
       return `<line class="chart-grid" x1="${px}" y1="${size.top}" x2="${px}" y2="${plotBottom}"></line><text class="chart-axis-label" x="${px}" y="${size.height - 8}" text-anchor="${tick.anchor}">${tick.label}</text>`;
     }).join("");
@@ -475,7 +611,7 @@
     els.chartLegend.querySelectorAll(".station-toggle:not(:disabled)").forEach(toggle => {
       toggle.addEventListener("change", () => {
         setStationVisible(toggle.dataset.station, toggle.checked);
-        renderGauges(index);
+        rebuildWaterChart();
       });
     });
 
@@ -483,11 +619,13 @@
     const seekFromPointer = event => {
       const bounds = els.chart.getBoundingClientRect();
       const viewX = ((event.clientX - bounds.left) / bounds.width) * size.width;
-      const next = Math.round(((viewX - size.left) / plotWidth) * (times.length - 1));
+      const fraction = Math.max(0, Math.min(1, (viewX - size.left) / plotWidth));
+      const next = chartStartIndex + Math.round(fraction * (chartEndIndex - chartStartIndex));
       stopPlayback();
-      setIndex(next);
+      setIndex(next, { syncChart: false });
     };
     els.chart.onpointerdown = event => {
+      event.preventDefault();
       dragging = true;
       els.chart.setPointerCapture(event.pointerId);
       seekFromPointer(event);
@@ -499,6 +637,10 @@
     return {
       x,
       y,
+      yMin,
+      yMax,
+      startIndex: chartStartIndex,
+      endIndex: chartEndIndex,
       measuredWidth,
       measuredHeight,
       cursor: els.chart.querySelector(".chart-cursor"),
@@ -515,10 +657,11 @@
 
   function setAllStationsVisible(isVisible) {
     data.stationOrder.forEach(id => setStationVisible(id, isVisible));
-    renderGauges(index);
+    rebuildWaterChart();
   }
 
   function renderGauges(i) {
+    const selectedTimeIsVisible = i >= chartStartIndex && i <= chartEndIndex;
     data.stationOrder.forEach(id => {
       const station = data.stations[id];
       const [observed, predicted, departure] = activeValues[id][i];
@@ -551,7 +694,7 @@
       }
       chart.series[id].classList.toggle("is-hidden", !isVisible);
       const point = chart.points[id];
-      if (observed == null || !isVisible) {
+      if (observed == null || !isVisible || !selectedTimeIsVisible) {
         point.classList.add("is-hidden");
       } else {
         point.classList.remove("is-hidden");
@@ -560,11 +703,14 @@
       }
     });
 
-    const cursorX = chart.x(i);
-    chart.cursor.setAttribute("x1", cursorX);
-    chart.cursor.setAttribute("x2", cursorX);
+    chart.cursor.classList.toggle("is-hidden", !selectedTimeIsVisible);
+    if (selectedTimeIsVisible) {
+      const cursorX = chart.x(i);
+      chart.cursor.setAttribute("x1", cursorX);
+      chart.cursor.setAttribute("x2", cursorX);
+    }
     els.chartTime.textContent = formatLocalChart(times[i]);
-    els.chart.setAttribute("aria-label", `Hourly verified water levels for ${data.metadata.displayTitle}. Selected time: ${formatLocal(times[i])}.`);
+    els.chart.setAttribute("aria-label", `Hourly verified water levels for ${data.metadata.displayTitle}. Visible range: ${formatLocal(times[chartStartIndex])} through ${formatLocal(times[chartEndIndex])}. Selected time: ${formatLocal(times[i])}.`);
   }
 
   function render() {
@@ -580,8 +726,12 @@
     if (index === nearestIndex(new Date(data.metadata.landfallTime))) document.getElementById("jump-landfall").classList.add("active");
   }
 
-  function setIndex(next) {
+  function setIndex(next, { syncChart = true } = {}) {
     index = Math.max(0, Math.min(times.length - 1, next));
+    if (syncChart && ensureChartContainsIndex(index)) {
+      chart = buildWaterChart();
+      updateChartWindowControls();
+    }
     render();
     if (index === times.length - 1 && timer) stopPlayback();
   }
@@ -595,7 +745,7 @@
   }
 
   function startPlayback() {
-    if (index === times.length - 1) index = 0;
+    if (index === times.length - 1) setIndex(0);
     timer = setInterval(() => setIndex(index + 1), Number(els.speed.value));
     els.play.classList.add("playing");
     els.play.innerHTML = '<span aria-hidden="true">Ⅱ</span>';
@@ -617,6 +767,14 @@
   document.getElementById("reset-view").addEventListener("click", () => {
     map.fitBounds(L.latLngBounds(data.metadata.mapBounds), { padding: [16, 16] });
   });
+  els.chartWindowSelect.addEventListener("change", event => {
+    stopPlayback();
+    configureChartWindow(event.target.value, index);
+    rebuildWaterChart();
+  });
+  els.chartEarlier.addEventListener("click", () => shiftChartWindow(-1));
+  els.chartLater.addEventListener("click", () => shiftChartWindow(1));
+  els.resetChartWindow.addEventListener("click", resetChartWindow);
   els.showAllStations.addEventListener("click", () => setAllStationsVisible(true));
   els.hideAllStations.addEventListener("click", () => setAllStationsVisible(false));
   els.slider.addEventListener("input", event => {
@@ -637,7 +795,7 @@
   });
 
   document.addEventListener("keydown", event => {
-    if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
+    if (["BUTTON", "INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       stopPlayback();

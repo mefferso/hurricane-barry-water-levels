@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="preconnect" href="https://basemaps.cartocdn.com">
   <link rel="stylesheet" href="leaflet.css?v=1.9.4">
-  <link rel="stylesheet" href="styles.css?v=multi-storm-1">
+  <link rel="stylesheet" href="styles.css?v=chart-window-1">
 </head>
 <body>
   <header class="site-header">
@@ -57,6 +57,23 @@
             <h2>Gauge heights over time</h2>
           </div>
           <button id="reset-view" class="text-button" type="button">Reset map</button>
+        </div>
+        <div class="chart-window-toolbar">
+          <label class="chart-window-select">Plot window
+            <select id="chart-window-select" aria-label="Plot window">
+              <option value="full">Full</option>
+              <option value="168">7 days</option>
+              <option value="120">5 days</option>
+              <option value="72">3 days</option>
+              <option value="48">48 hours</option>
+            </select>
+          </label>
+          <div class="chart-window-actions" role="group" aria-label="Move or reset the visible plot window">
+            <button id="chart-earlier" class="chart-window-button" type="button">Earlier</button>
+            <button id="chart-later" class="chart-window-button" type="button">Later</button>
+            <button id="reset-chart-window" class="chart-window-button reset" type="button">Reset plot</button>
+          </div>
+          <span id="chart-range" class="chart-range" aria-live="polite"></span>
         </div>
         <div class="chart-subtitle">
           <span>Verified height (ft)</span>
@@ -108,9 +125,9 @@
   </section>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="data/storms.js"></script>
-  <script src="data/barry-2019.js"></script>
-  <script src="data/ida-2021.js"></script>
-  <script src="app.js?v=multi-storm-1"></script>
+  <script src="data/storms.js?v=chart-window-1"></script>
+  <script src="data/barry-2019.js?v=chart-window-1"></script>
+  <script src="data/ida-2021.js?v=chart-window-1"></script>
+  <script src="app.js?v=chart-window-1"></script>
 </body>
 </html>
