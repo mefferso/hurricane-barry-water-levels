@@ -12,5 +12,12 @@ window.STORM_CATALOG = [
     year: 2021,
     defaultChartWindowHours: 120,
     dataFile: "data/ida-2021.js"
+  },
+  {
+    id: "isaac-2012",
+    name: "Hurricane Isaac",
+    year: 2012,
+    defaultChartWindowHours: 120,
+    dataFile: "data/isaac-2012.js"
   }
 ];
