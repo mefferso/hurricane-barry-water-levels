@@ -231,17 +231,48 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
 .chart-series.is-hidden { display: none; }
 .chart-cursor { stroke: rgba(255,255,255,.72); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
 .chart-point { stroke: #071522; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.chart-point.is-hidden { display: none; }
 .chart-hit-area { fill: transparent; cursor: ew-resize; }
+
+.gauge-filter-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  color: #8fa8b6;
+  font-size: .6rem;
+  font-weight: 850;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.gauge-filter-actions { display: flex; gap: 4px; }
+.gauge-filter-button {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3px 7px;
+  background: rgba(255,255,255,.025);
+  color: #9fb7c4;
+  font-size: .55rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+.gauge-filter-button:hover, .gauge-filter-button:focus-visible {
+  border-color: rgba(85,214,232,.55);
+  color: white;
+  outline: none;
+}
 
 .chart-legend {
   display: grid;
   gap: 4px;
-  margin-top: 8px;
+  margin-top: 5px;
 }
 
 .chart-legend-item {
   display: grid;
-  grid-template-columns: 14px 9px minmax(0, 1fr) auto;
+  grid-template-columns: 17px 9px minmax(0, 1fr) auto;
   align-items: center;
   gap: 7px;
   min-width: 0;
@@ -255,7 +286,7 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
 
 .chart-legend-item:hover { background: rgba(255,255,255,.035); }
 .chart-legend-item.is-muted { opacity: .42; }
-.station-toggle { width: 13px; height: 13px; margin: 0; accent-color: var(--series); cursor: pointer; }
+.station-toggle { width: 16px; height: 16px; margin: 0; accent-color: var(--series); cursor: pointer; }
 .station-toggle:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .chart-swatch { width: 8px; height: 3px; border-radius: 999px; background: var(--series); }
 .chart-legend-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
