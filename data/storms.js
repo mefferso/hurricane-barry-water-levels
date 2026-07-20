@@ -14,6 +14,13 @@ window.STORM_CATALOG = [
     "dataFile": "data/ida-2021.js"
   },
   {
+    "id": "claudette-2021",
+    "name": "Tropical Storm Claudette",
+    "year": 2021,
+    "defaultChartWindowHours": 120,
+    "dataFile": "data/claudette-2021.js"
+  },
+  {
     "id": "sally-2020",
     "name": "Hurricane Sally",
     "year": 2020,
