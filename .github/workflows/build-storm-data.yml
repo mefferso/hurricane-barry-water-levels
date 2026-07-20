@@ -111,7 +111,7 @@ jobs:
                   failures.append(f"{path} does not register {storm['id']}")
               if '"intervalMinutes":6' not in text:
                   failures.append(f"{path} is not a 6-minute dataset")
-              if "NaN" in text or "Infinity"" in text:
+              if "NaN" in text or "Infinity" in text:
                   failures.append(f"{path} contains a non-finite numeric value")
           if failures:
               raise SystemExit("\n".join(failures))
