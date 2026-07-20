@@ -115,7 +115,7 @@ The builder:
 
 ## Add another storm
 
-1. Add a storm entry to `scripts/storms.json` with its unique ID, Atlantic basin ID, official UTC landfall time, title, local timezone, map bounds, and source links.
+1. Add a storm entry to `scripts/storms.json` with its unique ID, Atlantic basin ID, official UTC landfall time, title, local timezone, map bounds, optional `default_chart_window_hours`, and source links.
 2. Add or override station configuration only when its datum, prediction support, label direction, or baseline method differs.
 3. Add the storm to the small browser catalog in `data/storms.js`, including an optional `defaultChartWindowHours` (`null` means the full event).
 4. Add the generated script tag to `index.html`.

@@ -455,6 +455,7 @@ def build_storm(
             "basinId": storm["basin_id"],
             "displayTitle": storm["display_title"],
             "subtitle": storm["subtitle"],
+            "defaultChartWindowHours": storm.get("default_chart_window_hours"),
             "landfallTime": iso_utc(landfall),
             "downloadStart": iso_utc(times[0]),
             "downloadEnd": iso_utc(times[-1]),
