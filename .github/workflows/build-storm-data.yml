@@ -1,0 +1,119 @@
+name: Build configured storm data
+
+on:
+  workflow_dispatch:
+    inputs:
+      storm:
+        description: Storm ID to rebuild, "missing", or "all"
+        required: true
+        default: missing
+  push:
+    branches:
+      - main
+      - "agent/**"
+    paths:
+      - scripts/storms.json
+      - scripts/build_storm_data.py
+      - scripts/sync_storm_catalog.py
+      - .github/workflows/build-storm-data.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: storm-data-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Determine storms to build
+        id: plan
+        env:
+          REQUESTED_STORM: ${{ github.event.inputs.storm || 'missing' }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          config = json.loads(Path("scripts/storms.json").read_text(encoding="utf-8"))
+          known = [storm["id"] for storm in config["storms"]]
+          requested = os.environ.get("REQUESTED_STORM", "missing")
+
+          if requested == "all":
+              selected = known
+          elif requested == "missing":
+              selected = [storm_id for storm_id in known if not Path(f"data/{storm_id}.js").exists()]
+          elif requested in known:
+              selected = [requested]
+          else:
+              raise SystemExit(f"Unknown storm ID: {requested}")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"storms={','.join(selected)}\n")
+          print("Storms selected:", ", ".join(selected) if selected else "none")
+          PY
+
+      - name: Download and build storm datasets
+        if: steps.plan.outputs.storms != ''
+        env:
+          STORMS: ${{ steps.plan.outputs.storms }}
+        run: |
+          IFS=',' read -ra storm_ids <<< "$STORMS"
+          for storm_id in "${storm_ids[@]}"; do
+            python3 scripts/build_storm_data.py --storm "$storm_id"
+          done
+
+      - name: Synchronize catalog and HTML script tags
+        run: python3 scripts/sync_storm_catalog.py
+
+      - name: Validate generated files
+        run: |
+          python3 -m py_compile scripts/build_storm_data.py scripts/sync_storm_catalog.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          config = json.loads(Path("scripts/storms.json").read_text(encoding="utf-8"))
+          failures = []
+          for storm in config["storms"]:
+              path = Path("data") / f"{storm['id']}.js"
+              if not path.exists():
+                  failures.append(f"missing {path}")
+                  continue
+              text = path.read_text(encoding="utf-8")
+              registration = f'window.STORM_DATASETS["{storm["id"]}"]'
+              if registration not in text:
+                  failures.append(f"{path} does not register {storm['id']}")
+              if "NaN" in text or "Infinity" in text:
+                  failures.append(f"{path} contains a non-finite numeric value")
+          if failures:
+              raise SystemExit("\n".join(failures))
+          print(f"Validated {len(config['storms'])} configured datasets")
+          PY
+
+      - name: Commit generated changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data index.html
+          if git diff --cached --quiet; then
+            echo "No generated changes to commit."
+            exit 0
+          fi
+          git commit -m "Generate configured storm data [skip ci]"
+          git push
