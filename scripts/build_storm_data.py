@@ -60,9 +60,10 @@ def ceil_hour(value: datetime) -> datetime:
     return floored if value == floored else floored + timedelta(hours=1)
 
 
-def hourly_range(start: datetime, end: datetime) -> list[datetime]:
-    hours = int((end - start).total_seconds() // 3600)
-    return [start + timedelta(hours=i) for i in range(hours + 1)]
+def interval_range(start: datetime, end: datetime, minutes: int) -> list[datetime]:
+    step = timedelta(minutes=minutes)
+    count = int((end - start) // step)
+    return [start + step * i for i in range(count + 1)]
 
 
 def finite_number(value: Any) -> float | None:
@@ -146,7 +147,7 @@ def coops_series(
         "format": "json",
     }
     if product == "predictions":
-        params["interval"] = "h"
+        params["interval"] = "6"
     url = api_url(params)
     try:
         payload = downloader.get_json(url)
@@ -154,7 +155,7 @@ def coops_series(
         return {}, None, url, str(exc)
     if payload.get("error"):
         return {}, payload.get("metadata"), url, payload["error"].get("message", "Unknown NOAA API error")
-    key = "data" if product == "hourly_height" else "predictions"
+    key = "predictions" if product == "predictions" else "data"
     rows = payload.get(key, [])
     result: dict[datetime, float] = {}
     for row in rows:
@@ -237,8 +238,10 @@ def event_window(
     display_days_before: int,
     display_days_after: int,
     override: dict[str, Any] | None,
+    interval_minutes: int,
 ) -> dict[str, Any]:
-    width = int(settings["rolling_median_hours"])
+    samples_per_hour = 60 // interval_minutes
+    width = max(1, int(settings["rolling_median_hours"]) * samples_per_hour)
     departures = {
         station_id: rolling_median([row[2] for row in values], width)
         for station_id, values in station_values.items()
@@ -257,11 +260,14 @@ def event_window(
             and near_count / len(valid) >= settings["recovery_required_fraction"]
         )
 
-    onset_index = first_true_run(onset_flags, int(settings["onset_consecutive_hours"]))
+    onset_index = first_true_run(
+        onset_flags,
+        int(settings["onset_consecutive_hours"]) * samples_per_hour,
+    )
     landfall_index = min(range(len(times)), key=lambda i: abs(times[i] - landfall))
     recovery_index = first_true_run(
         recovery_flags,
-        int(settings["recovery_consecutive_hours"]),
+        int(settings["recovery_consecutive_hours"]) * samples_per_hour,
         start_index=max(landfall_index, (onset_index or 0)),
     )
 
@@ -315,8 +321,8 @@ def baseline_for_station(
             "method": "median_pre_event",
             "value": rounded(statistics.median(sample)),
             "periodStart": iso_utc(download_start),
-            "periodEnd": iso_utc(period_end - timedelta(hours=1)),
-            "sampleHours": len(sample),
+            "periodEnd": iso_utc(period_end - timedelta(minutes=6)),
+            "sampleCount": len(sample),
             "label": f"median of first {hours} pre-event hours",
         }
     )
@@ -335,7 +341,8 @@ def build_storm(
     after = int(storm.get("download_days_after", defaults["download_days_after"]))
     download_start = floor_hour(landfall - timedelta(days=before))
     download_end = ceil_hour(landfall + timedelta(days=after))
-    times = hourly_range(download_start, download_end)
+    interval_minutes = int(storm.get("interval_minutes", defaults.get("interval_minutes", 6)))
+    times = interval_range(download_start, download_end, interval_minutes)
     timestamp_set = set(times)
 
     hurdat_text = downloader.get_text(defaults["hurdat_url"])
@@ -354,9 +361,23 @@ def build_storm(
         station_id = station["id"]
         station_order.append(station_id)
         observations, metadata, observation_url, observation_error = coops_series(
-            downloader, station, download_start, download_end, defaults["application"], "hourly_height"
+            downloader, station, download_start, download_end, defaults["application"], "water_level"
         )
         source_requests.append(observation_url)
+        observation_product = "water_level"
+        if observation_error or not observations:
+            fallback, fallback_metadata, fallback_url, fallback_error = coops_series(
+                downloader, station, download_start, download_end, defaults["application"], "hourly_height"
+            )
+            source_requests.append(fallback_url)
+            if fallback:
+                observations = fallback
+                metadata = fallback_metadata or metadata
+                observation_error = None
+                observation_product = "hourly_height"
+                warnings.append(f"{station_id} has no usable 6-minute water levels; using verified hourly heights.")
+            else:
+                observation_error = observation_error or fallback_error
         if observation_error:
             warnings.append(f"{station_id} observations: {observation_error}")
         observations = {timestamp: value for timestamp, value in observations.items() if timestamp in timestamp_set}
@@ -402,9 +423,9 @@ def build_storm(
         prediction_count = sum(row[1] is not None for row in values)
         missing = len(times) - observed_count
         if missing:
-            warnings.append(f"{station_id} is missing {missing} of {len(times)} hourly observations.")
+            warnings.append(f"{station_id} is missing {missing} of {len(times)} timeline samples.")
         if station.get("predictions", False) and prediction_count != len(times):
-            warnings.append(f"{station_id} is missing {len(times) - prediction_count} hourly predictions.")
+            warnings.append(f"{station_id} is missing {len(times) - prediction_count} 6-minute predictions.")
 
         lat = finite_number(metadata.get("lat")) if metadata else None
         lon = finite_number(metadata.get("lon")) if metadata else None
@@ -422,9 +443,11 @@ def build_storm(
             "tooltipDirection": station.get("tooltip_direction", "auto"),
             "tooltipOffset": station.get("tooltip_offset", [0, 0]),
             "coverage": {
-                "observationHours": observed_count,
-                "predictionHours": prediction_count,
-                "totalHours": len(times),
+                "observationSamples": observed_count,
+                "predictionSamples": prediction_count,
+                "totalSamples": len(times),
+                "intervalMinutes": interval_minutes,
+                "observationProduct": observation_product,
                 "firstObservation": iso_utc(min(observations)) if observations else None,
                 "lastObservation": iso_utc(max(observations)) if observations else None,
                 "observationError": observation_error,
@@ -444,6 +467,7 @@ def build_storm(
         int(storm.get("display_days_before", defaults["display_days_before"])),
         int(storm.get("display_days_after", defaults["display_days_after"])),
         storm.get("display_window_override"),
+        interval_minutes,
     )
 
     dataset = {
@@ -456,6 +480,7 @@ def build_storm(
             "displayTitle": storm["display_title"],
             "subtitle": storm["subtitle"],
             "defaultChartWindowHours": storm.get("default_chart_window_hours"),
+            "intervalMinutes": interval_minutes,
             "landfallTime": iso_utc(landfall),
             "downloadStart": iso_utc(times[0]),
             "downloadEnd": iso_utc(times[-1]),
@@ -464,8 +489,8 @@ def build_storm(
             "generated": date.today().isoformat(),
             "eventWindow": window,
             "sources": {
-                "water": "NOAA CO-OPS verified hourly heights",
-                "predictions": "NOAA CO-OPS astronomical tide predictions",
+                "water": "NOAA CO-OPS 6-minute water levels when available; verified hourly fallback",
+                "predictions": "NOAA CO-OPS 6-minute astronomical tide predictions",
                 "track": "NHC HURDAT2 official best track",
                 "coopsApi": "https://api.tidesandcurrents.noaa.gov/api/prod/",
                 "hurdat": defaults["hurdat_url"],
@@ -499,7 +524,7 @@ def write_dataset(dataset: dict[str, Any], output_dir: Path) -> Path:
 def validate_dataset(dataset: dict[str, Any]) -> None:
     length = len(dataset["times"])
     if length < 2:
-        raise ValueError("Timeline must contain at least two hours")
+        raise ValueError("Timeline must contain at least two samples")
     for station_id in dataset["stationOrder"]:
         values = dataset["stations"][station_id]["values"]
         if len(values) != length:
@@ -535,7 +560,10 @@ def main() -> int:
         validate_dataset(dataset)
         path = write_dataset(dataset, args.output_dir)
         window = dataset["metadata"]["eventWindow"]
-        print(f"  wrote {path.relative_to(ROOT)} ({len(dataset['times'])} downloaded hours)")
+        print(
+            f"  wrote {path.relative_to(ROOT)} "
+            f"({len(dataset['times'])} samples at {dataset['metadata']['intervalMinutes']}-minute intervals)"
+        )
         print(f"  display window: {window['displayStart']} to {window['displayEnd']} ({window['method']})")
         for warning in warnings:
             print(f"  WARNING: {warning}")

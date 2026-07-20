@@ -84,6 +84,18 @@
   let chartWindowHours = null;
   let chartYScale = null;
 
+  function sampleIntervalMinutes() {
+    return Math.max(1, Number(data?.metadata?.intervalMinutes) || 60);
+  }
+
+  function samplesPerHour() {
+    return Math.max(1, Math.round(60 / sampleIntervalMinutes()));
+  }
+
+  function hourStep(hours) {
+    return Math.max(1, Math.round(hours * 60 / sampleIntervalMinutes()));
+  }
+
   function colorForDeparture(value) {
     if (value == null) return "#6d8593";
     if (value <= 0) return "#4292ff";
@@ -116,7 +128,8 @@
       timeZone: data.metadata.localTimezone,
       month: "short",
       day: "numeric",
-      hour: "numeric"
+      hour: "numeric",
+      minute: "2-digit"
     }).format(value);
   }
 
@@ -248,7 +261,8 @@
     els.subtitle.textContent = data.metadata.subtitle;
     els.stormTitle.textContent = data.metadata.displayTitle;
     els.gaugeCount.textContent = `${available} ${available === 1 ? "gauge" : "gauges"}`;
-    els.hourCount.textContent = `${times.length} hours`;
+    const durationHours = Math.round(((times.length - 1) * sampleIntervalMinutes()) / 60);
+    els.hourCount.textContent = `${durationHours} hours · ${sampleIntervalMinutes()}-min data`;
     els.stormSelect.value = data.metadata.id;
     document.title = `${data.metadata.displayTitle} Water-Level Timeline`;
   }
@@ -256,6 +270,7 @@
   function configureTimeline() {
     const landfall = new Date(data.metadata.landfallTime);
     els.slider.max = String(times.length - 1);
+    els.date.step = String(sampleIntervalMinutes() * 60);
     els.date.min = inputLocalValue(times[0]);
     els.date.max = inputLocalValue(times[times.length - 1]);
     els.dateZone.textContent = new Intl.DateTimeFormat("en-US", {
@@ -270,8 +285,8 @@
   function normalizedChartWindowHours(value) {
     if (value == null || value === "full") return null;
     const hours = Number(value);
-    const fullSpan = Math.max(0, times.length - 1);
-    if (!Number.isFinite(hours) || hours <= 0 || hours >= fullSpan) return null;
+    const fullSpanHours = Math.max(0, ((times.length - 1) * sampleIntervalMinutes()) / 60);
+    if (!Number.isFinite(hours) || hours <= 0 || hours >= fullSpanHours) return null;
     return Math.round(hours);
   }
 
@@ -283,7 +298,7 @@
       chartEndIndex = last;
       return;
     }
-    const span = Math.min(chartWindowHours, last);
+    const span = Math.min(hourStep(chartWindowHours), last);
     chartStartIndex = Math.max(0, Math.min(last - span, Math.round(centerIndex - span / 2)));
     chartEndIndex = chartStartIndex + span;
   }
@@ -496,13 +511,14 @@
         <div class="metric"><strong>${storm.pressure ?? "—"}</strong><span>minimum mb</span></div>
         <div class="metric"><strong>${storm.lat.toFixed(1)}°N</strong><span>${Math.abs(storm.lon).toFixed(1)}°W</span></div>
       </div>
-      <div class="storm-note">${storm.exact ? "Official best-track fix" : "Hourly interpolation between official fixes"}</div>`;
+      <div class="storm-note">${storm.exact ? "Official best-track fix" : "Interpolation between official fixes"}</div>`;
   }
 
   function dynamicChartTicks(measuredWidth) {
     const span = chartEndIndex - chartStartIndex;
     const tickCount = measuredWidth < 390 ? 4 : 5;
-    const formatter = span <= 72 ? formatDateTimeTick : formatDateTick;
+    const spanHours = (span * sampleIntervalMinutes()) / 60;
+    const formatter = spanHours <= 72 ? formatDateTimeTick : formatDateTick;
     const candidates = Array.from({ length: tickCount }, (_, position) =>
       Math.round(chartStartIndex + (span * position) / Math.max(1, tickCount - 1))
     );
@@ -710,7 +726,7 @@
       chart.cursor.setAttribute("x2", cursorX);
     }
     els.chartTime.textContent = formatLocalChart(times[i]);
-    els.chart.setAttribute("aria-label", `Hourly verified water levels for ${data.metadata.displayTitle}. Visible range: ${formatLocal(times[chartStartIndex])} through ${formatLocal(times[chartEndIndex])}. Selected time: ${formatLocal(times[i])}.`);
+    els.chart.setAttribute("aria-label", `${sampleIntervalMinutes()}-minute water levels for ${data.metadata.displayTitle}. Visible range: ${formatLocal(times[chartStartIndex])} through ${formatLocal(times[chartEndIndex])}. Selected time: ${formatLocal(times[i])}.`);
   }
 
   function render() {
@@ -758,10 +774,10 @@
 
   els.stormSelect.innerHTML = CATALOG.map(storm => `<option value="${storm.id}">${storm.name} — ${storm.year}</option>`).join("");
   els.stormSelect.addEventListener("change", event => loadStorm(event.target.value));
-  document.getElementById("back-6").addEventListener("click", () => setIndex(index - 6));
-  document.getElementById("back-1").addEventListener("click", () => setIndex(index - 1));
-  document.getElementById("forward-1").addEventListener("click", () => setIndex(index + 1));
-  document.getElementById("forward-6").addEventListener("click", () => setIndex(index + 6));
+  document.getElementById("back-6").addEventListener("click", () => setIndex(index - hourStep(6)));
+  document.getElementById("back-1").addEventListener("click", () => setIndex(index - hourStep(1)));
+  document.getElementById("forward-1").addEventListener("click", () => setIndex(index + hourStep(1)));
+  document.getElementById("forward-6").addEventListener("click", () => setIndex(index + hourStep(6)));
   document.getElementById("jump-start").addEventListener("click", () => setIndex(0));
   document.getElementById("jump-landfall").addEventListener("click", () => setIndex(nearestIndex(new Date(data.metadata.landfallTime))));
   document.getElementById("reset-view").addEventListener("click", () => {
@@ -799,12 +815,12 @@
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       stopPlayback();
-      setIndex(index - (event.shiftKey ? 6 : 1));
+      setIndex(index - hourStep(event.shiftKey ? 6 : 1));
     }
     if (event.key === "ArrowRight") {
       event.preventDefault();
       stopPlayback();
-      setIndex(index + (event.shiftKey ? 6 : 1));
+      setIndex(index + hourStep(event.shiftKey ? 6 : 1));
     }
     if (event.key === " ") {
       event.preventDefault();
