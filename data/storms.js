@@ -54,5 +54,12 @@ window.STORM_CATALOG = [
     "year": 2012,
     "defaultChartWindowHours": 120,
     "dataFile": "data/isaac-2012.js"
+  },
+  {
+    "id": "katrina-2005",
+    "name": "Hurricane Katrina",
+    "year": 2005,
+    "defaultChartWindowHours": 120,
+    "dataFile": "data/katrina-2005.js"
   }
 ];

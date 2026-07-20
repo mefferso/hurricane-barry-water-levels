@@ -117,7 +117,7 @@
       "year": 2019,
       "basin_id": "AL022019",
       "display_title": "Hurricane Barry",
-      "subtitle": "Historical event reconstruction \u00b7 July 2019",
+      "subtitle": "Historical event reconstruction · July 2019",
       "default_chart_window_hours": null,
       "landfall_time_utc": "2019-07-13T15:00:00Z",
       "local_timezone": "America/Chicago",
@@ -159,7 +159,7 @@
       "year": 2021,
       "basin_id": "AL092021",
       "display_title": "Hurricane Ida",
-      "subtitle": "Historical event reconstruction \u00b7 August\u2013September 2021",
+      "subtitle": "Historical event reconstruction · August–September 2021",
       "default_chart_window_hours": 120,
       "landfall_time_utc": "2021-08-29T16:55:00Z",
       "local_timezone": "America/Chicago",
@@ -184,7 +184,7 @@
       "year": 2012,
       "basin_id": "AL092012",
       "display_title": "Hurricane Isaac",
-      "subtitle": "Historical event reconstruction \u00b7 August\u2013September 2012",
+      "subtitle": "Historical event reconstruction · August–September 2012",
       "default_chart_window_hours": 120,
       "landfall_time_utc": "2012-08-29T00:00:00Z",
       "local_timezone": "America/Chicago",
@@ -210,7 +210,7 @@
       "year": 2020,
       "basin_id": "AL192020",
       "display_title": "Hurricane Sally",
-      "subtitle": "Historical event reconstruction \u00b7 September 2020",
+      "subtitle": "Historical event reconstruction · September 2020",
       "default_chart_window_hours": 120,
       "landfall_time_utc": "2020-09-16T09:45:00Z",
       "local_timezone": "America/Chicago",
@@ -247,7 +247,7 @@
       "year": 2024,
       "basin_id": "AL062024",
       "display_title": "Hurricane Francine",
-      "subtitle": "Historical event reconstruction \u00b7 September 2024",
+      "subtitle": "Historical event reconstruction · September 2024",
       "default_chart_window_hours": 120,
       "landfall_time_utc": "2024-09-11T22:00:00Z",
       "local_timezone": "America/Chicago",
@@ -284,7 +284,7 @@
       "year": 2020,
       "basin_id": "AL282020",
       "display_title": "Hurricane Zeta",
-      "subtitle": "Historical event reconstruction \u00b7 October\u2013November 2020",
+      "subtitle": "Historical event reconstruction · October–November 2020",
       "default_chart_window_hours": 120,
       "landfall_time_utc": "2020-10-28T21:00:00Z",
       "local_timezone": "America/Chicago",
@@ -321,7 +321,7 @@
       "year": 2020,
       "basin_id": "AL032020",
       "display_title": "Tropical Storm Cristobal",
-      "subtitle": "Historical event reconstruction \u00b7 May\u2013June 2020",
+      "subtitle": "Historical event reconstruction · May–June 2020",
       "default_chart_window_hours": 120,
       "landfall_time_utc": "2020-06-07T22:00:00Z",
       "local_timezone": "America/Chicago",
@@ -358,7 +358,7 @@
       "year": 2021,
       "basin_id": "AL032021",
       "display_title": "Tropical Storm Claudette",
-      "subtitle": "Historical event reconstruction \u00b7 June 2021",
+      "subtitle": "Historical event reconstruction · June 2021",
       "default_chart_window_hours": 120,
       "landfall_time_utc": "2021-06-19T04:30:00Z",
       "local_timezone": "America/Chicago",
@@ -385,6 +385,49 @@
             "latitude": 29.2,
             "longitude": -91.0,
             "wind_kt": 40
+          }
+        ]
+      }
+    },
+    {
+      "id": "katrina-2005",
+      "name": "Katrina",
+      "year": 2005,
+      "basin_id": "AL122005",
+      "display_title": "Hurricane Katrina",
+      "subtitle": "Historical event reconstruction · August–September 2005",
+      "default_chart_window_hours": 120,
+      "landfall_time_utc": "2005-08-29T11:10:00Z",
+      "local_timezone": "America/Chicago",
+      "map_bounds": [
+        [
+          26.0,
+          -93.5
+        ],
+        [
+          32.0,
+          -87.0
+        ]
+      ],
+      "sources": {
+        "hurdat_storm": "https://www.nhc.noaa.gov/data/hurdat/hurdat2-1851-2025-02272026.txt#AL122005",
+        "auto_configuration": "Storm identity and primary regional landfall selected from NHC HURDAT2."
+      },
+      "auto_selected_landfall": {
+        "latitude": 29.3,
+        "longitude": -89.6,
+        "available_regional_landfalls": [
+          {
+            "time_utc": "2005-08-29T11:10:00Z",
+            "latitude": 29.3,
+            "longitude": -89.6,
+            "wind_kt": 110
+          },
+          {
+            "time_utc": "2005-08-29T14:45:00Z",
+            "latitude": 30.2,
+            "longitude": -89.6,
+            "wind_kt": 105
           }
         ]
       }
