@@ -19,5 +19,12 @@ window.STORM_CATALOG = [
     "year": 2012,
     "defaultChartWindowHours": 120,
     "dataFile": "data/isaac-2012.js"
+  },
+  {
+    "id": "sally-2020",
+    "name": "Hurricane Sally",
+    "year": 2020,
+    "defaultChartWindowHours": 120,
+    "dataFile": "data/sally-2020.js"
   }
 ];

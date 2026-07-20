@@ -25,7 +25,10 @@
       "datum": "MHHW",
       "predictions": true,
       "tooltip_direction": "top",
-      "tooltip_offset": [0, -12]
+      "tooltip_offset": [
+        0,
+        -12
+      ]
     },
     {
       "id": "8761724",
@@ -33,7 +36,10 @@
       "datum": "MHHW",
       "predictions": true,
       "tooltip_direction": "right",
-      "tooltip_offset": [12, 0]
+      "tooltip_offset": [
+        12,
+        0
+      ]
     },
     {
       "id": "8747437",
@@ -41,7 +47,10 @@
       "datum": "MHHW",
       "predictions": true,
       "tooltip_direction": "right",
-      "tooltip_offset": [12, 0]
+      "tooltip_offset": [
+        12,
+        0
+      ]
     },
     {
       "id": "8762075",
@@ -49,7 +58,10 @@
       "datum": "MHHW",
       "predictions": true,
       "tooltip_direction": "left",
-      "tooltip_offset": [-12, 0]
+      "tooltip_offset": [
+        -12,
+        0
+      ]
     },
     {
       "id": "8762482",
@@ -61,7 +73,10 @@
         "hours_from_download_start": 48
       },
       "tooltip_direction": "left",
-      "tooltip_offset": [-12, 0]
+      "tooltip_offset": [
+        -12,
+        0
+      ]
     }
   ],
   "storms": [
@@ -75,7 +90,16 @@
       "default_chart_window_hours": null,
       "landfall_time_utc": "2019-07-13T15:00:00Z",
       "local_timezone": "America/Chicago",
-      "map_bounds": [[27.15, -94.05], [31.2, -86.35]],
+      "map_bounds": [
+        [
+          27.15,
+          -94.05
+        ],
+        [
+          31.2,
+          -86.35
+        ]
+      ],
       "download_days_after": 8,
       "observation_rounding_decimals": 2,
       "display_window_override": {
@@ -108,7 +132,16 @@
       "default_chart_window_hours": 120,
       "landfall_time_utc": "2021-08-29T16:55:00Z",
       "local_timezone": "America/Chicago",
-      "map_bounds": [[26.0, -92.8], [32.0, -87.0]],
+      "map_bounds": [
+        [
+          26.0,
+          -92.8
+        ],
+        [
+          32.0,
+          -87.0
+        ]
+      ],
       "sources": {
         "tcr": "https://www.nhc.noaa.gov/data/tcr/AL092021_Ida.pdf",
         "event_page": "https://www.weather.gov/lix/hurricaneida2021"
@@ -124,11 +157,57 @@
       "default_chart_window_hours": 120,
       "landfall_time_utc": "2012-08-29T00:00:00Z",
       "local_timezone": "America/Chicago",
-      "map_bounds": [[26.0, -92.8], [32.0, -87.0]],
+      "map_bounds": [
+        [
+          26.0,
+          -92.8
+        ],
+        [
+          32.0,
+          -87.0
+        ]
+      ],
       "sources": {
         "tcr": "https://www.nhc.noaa.gov/data/tcr/AL092012_Isaac.pdf",
         "event_page": "https://www.weather.gov/lix/ts2012",
         "post_storm_report": "https://www.weather.gov/lix/psh_isaac"
+      }
+    },
+    {
+      "id": "sally-2020",
+      "name": "Sally",
+      "year": 2020,
+      "basin_id": "AL192020",
+      "display_title": "Hurricane Sally",
+      "subtitle": "Historical event reconstruction · September 2020",
+      "default_chart_window_hours": 120,
+      "landfall_time_utc": "2020-09-16T09:45:00Z",
+      "local_timezone": "America/Chicago",
+      "map_bounds": [
+        [
+          26.0,
+          -93.5
+        ],
+        [
+          32.0,
+          -87.0
+        ]
+      ],
+      "sources": {
+        "hurdat_storm": "https://www.nhc.noaa.gov/data/hurdat/hurdat2-1851-2025-02272026.txt#AL192020",
+        "auto_configuration": "Storm identity and primary regional landfall selected from NHC HURDAT2."
+      },
+      "auto_selected_landfall": {
+        "latitude": 30.3,
+        "longitude": -87.7,
+        "available_regional_landfalls": [
+          {
+            "time_utc": "2020-09-16T09:45:00Z",
+            "latitude": 30.3,
+            "longitude": -87.7,
+            "wind_kt": 95
+          }
+        ]
       }
     }
   ]
