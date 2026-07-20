@@ -244,24 +244,6 @@ def patch_builder() -> None:
         "timeline validation",
     )
 
-        text = replace_once(
-        text,
-        '''        raise ValueError("Timeline must contain at least two hours")
-''',
-        '''        raise ValueError("Timeline must contain at least two samples")
-''',
-        "timeline validation",
-    )
-
-        text = replace_once(
-        text,
-        '''        raise ValueError("Timeline must contain at least two hours")
-''',
-        '''        raise ValueError("Timeline must contain at least two samples")
-''',
-        "timeline validation",
-    )
-
     text = replace_once(
         text,
         '''        print(f"  wrote {path.relative_to(ROOT)} ({len(dataset['times'])} downloaded hours)")
