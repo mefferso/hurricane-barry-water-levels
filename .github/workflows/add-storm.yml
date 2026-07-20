@@ -30,6 +30,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Enable 6-minute water-level support
+        run: python3 scripts/enable_six_minute_data.py
+
       - name: Resolve and configure storm
         id: storm
         env:
@@ -52,6 +55,7 @@ jobs:
           python3 -m py_compile \
             scripts/add_storm.py \
             scripts/build_storm_data.py \
+            scripts/enable_six_minute_data.py \
             scripts/sync_storm_catalog.py
           python3 - <<'PY'
           import json
@@ -70,11 +74,13 @@ jobs:
           text = path.read_text(encoding='utf-8')
           if f'window.STORM_DATASETS["{storm_id}"]' not in text:
               raise SystemExit(f'{path} does not register {storm_id}')
+          if '"intervalMinutes":6' not in text:
+              raise SystemExit(f'{path} is not a 6-minute dataset')
           if 'NaN' in text or 'Infinity' in text:
               raise SystemExit(f'{path} contains a non-finite numeric value')
           if f'data/{storm_id}.js' not in Path('index.html').read_text(encoding='utf-8'):
               raise SystemExit(f'index.html does not load {storm_id}')
-          print(f'Validated {storm_id}')
+          print(f'Validated {storm_id} at 6-minute resolution')
           PY
 
       - name: Commit generated storm
@@ -83,10 +89,10 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add scripts/storms.json data index.html
+          git add app.js scripts/build_storm_data.py scripts/storms.json data index.html
           if git diff --cached --quiet; then
             echo 'No changes to commit. The storm was already configured and its generated files are current.'
             exit 0
           fi
-          git commit -m "Add ${STORM_ID} storm data [skip ci]"
+          git commit -m "Add ${STORM_ID} 6-minute storm data [skip ci]"
           git push
