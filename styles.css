@@ -34,6 +34,7 @@ button { color: inherit; }
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 18px;
   padding: 18px 24px;
   border-bottom: 1px solid var(--line);
 }
@@ -53,7 +54,46 @@ h1 {
   line-height: 1;
 }
 
-h1 span { color: #a8becb; font-weight: 450; }
+h1 .storm-title { color: var(--text); font-weight: 850; }
+h1 .viewer-title { color: #a8becb; font-weight: 450; }
+
+.header-controls {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 14px;
+  min-width: 0;
+}
+
+.storm-picker {
+  display: grid;
+  gap: 4px;
+  color: #7f9baa;
+  font-size: .58rem;
+  font-weight: 850;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.storm-picker select {
+  min-width: 190px;
+  border: 1px solid rgba(85,214,232,.3);
+  border-radius: 9px;
+  padding: 7px 30px 7px 10px;
+  color: #e5f1f5;
+  background: #0b202e;
+  color-scheme: dark;
+  cursor: pointer;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.storm-picker select:hover, .storm-picker select:focus-visible {
+  border-color: rgba(85,214,232,.7);
+  outline: none;
+}
 
 .header-badges {
   display: flex;
@@ -286,7 +326,9 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
 
 .chart-legend-item:hover { background: rgba(255,255,255,.035); }
 .chart-legend-item.is-muted { opacity: .42; }
+.chart-legend-item.is-unavailable { cursor: not-allowed; opacity: .34; }
 .station-toggle { width: 16px; height: 16px; margin: 0; accent-color: var(--series); cursor: pointer; }
+.station-toggle:disabled { cursor: not-allowed; }
 .station-toggle:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .chart-swatch { width: 8px; height: 3px; border-radius: 999px; background: var(--series); }
 .chart-legend-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -409,8 +451,10 @@ h2 { margin: 2px 0 0; font-size: 1rem; }
 }
 
 @media (max-width: 680px) {
-  .site-header { padding: 13px 14px; min-height: 76px; }
-  h1 span { display: block; margin-top: 4px; }
+  .site-header { padding: 13px 14px; min-height: 76px; align-items: flex-start; }
+  h1 .viewer-title { display: block; margin-top: 4px; }
+  .header-controls { align-items: flex-start; }
+  .storm-picker select { min-width: 145px; max-width: 46vw; }
   .header-badges { display: none; }
   .dashboard { padding: 0 7px 8px; gap: 8px; }
   .map-shell { height: 60vh; min-height: 420px; border-radius: 12px; }

@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "defaults": {
+    "application": "LIXHistoricalWaterViewer",
+    "hurdat_url": "https://www.nhc.noaa.gov/data/hurdat/hurdat2-1851-2025-02272026.txt",
+    "download_days_before": 7,
+    "download_days_after": 7,
+    "display_days_before": 5,
+    "display_days_after": 5,
+    "event_window": {
+      "rolling_median_hours": 3,
+      "onset_threshold_ft": 0.35,
+      "onset_consecutive_hours": 3,
+      "onset_min_gauges": 2,
+      "recovery_threshold_ft": 0.25,
+      "recovery_consecutive_hours": 18,
+      "recovery_min_gauges": 2,
+      "recovery_required_fraction": 0.75
+    }
+  },
+  "stations": [
+    {
+      "id": "8761927",
+      "name": "New Canal Station",
+      "datum": "MHHW",
+      "predictions": true,
+      "tooltip_direction": "top",
+      "tooltip_offset": [0, -12]
+    },
+    {
+      "id": "8761724",
+      "name": "Grand Isle",
+      "datum": "MHHW",
+      "predictions": true,
+      "tooltip_direction": "right",
+      "tooltip_offset": [12, 0]
+    },
+    {
+      "id": "8747437",
+      "name": "Bay Waveland Yacht Club",
+      "datum": "MHHW",
+      "predictions": true,
+      "tooltip_direction": "right",
+      "tooltip_offset": [12, 0]
+    },
+    {
+      "id": "8762075",
+      "name": "Port Fourchon, Belle Pass",
+      "datum": "MHHW",
+      "predictions": true,
+      "tooltip_direction": "left",
+      "tooltip_offset": [-12, 0]
+    },
+    {
+      "id": "8762482",
+      "name": "West Bank 1, Bayou Gauche",
+      "datum": "MSL",
+      "predictions": false,
+      "baseline": {
+        "method": "median_pre_event",
+        "hours_from_download_start": 48
+      },
+      "tooltip_direction": "left",
+      "tooltip_offset": [-12, 0]
+    }
+  ],
+  "storms": [
+    {
+      "id": "barry-2019",
+      "name": "Barry",
+      "year": 2019,
+      "basin_id": "AL022019",
+      "display_title": "Hurricane Barry",
+      "subtitle": "Historical event reconstruction · July 2019",
+      "landfall_time_utc": "2019-07-13T15:00:00Z",
+      "local_timezone": "America/Chicago",
+      "map_bounds": [[27.15, -94.05], [31.2, -86.35]],
+      "download_days_after": 8,
+      "observation_rounding_decimals": 2,
+      "display_window_override": {
+        "start_utc": "2019-07-10T00:00:00Z",
+        "end_utc": "2019-07-20T23:00:00Z",
+        "reason": "Preserves the original Barry viewer timeline and verified values."
+      },
+      "station_overrides": {
+        "8762482": {
+          "baseline": {
+            "method": "fixed",
+            "value": -0.212,
+            "label": "July 10 pre-storm mean",
+            "reason": "Preserves the baseline used by the original Barry viewer."
+          }
+        }
+      },
+      "sources": {
+        "tcr": "https://www.nhc.noaa.gov/data/tcr/AL022019_Barry.pdf",
+        "event_page": "https://www.weather.gov/lix/hurricanebarry"
+      }
+    },
+    {
+      "id": "ida-2021",
+      "name": "Ida",
+      "year": 2021,
+      "basin_id": "AL092021",
+      "display_title": "Hurricane Ida",
+      "subtitle": "Historical event reconstruction · August–September 2021",
+      "landfall_time_utc": "2021-08-29T16:55:00Z",
+      "local_timezone": "America/Chicago",
+      "map_bounds": [[26.0, -92.8], [32.0, -87.0]],
+      "sources": {
+        "tcr": "https://www.nhc.noaa.gov/data/tcr/AL092021_Ida.pdf",
+        "event_page": "https://www.weather.gov/lix/hurricaneida2021"
+      }
+    }
+  ]
+}
