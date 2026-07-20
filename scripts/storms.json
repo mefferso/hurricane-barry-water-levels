@@ -77,6 +77,37 @@
         -12,
         0
       ]
+    },
+    {
+      "id": "8761305",
+      "name": "Shell Beach",
+      "source": "coops",
+      "datum": "MHHW",
+      "predictions": true,
+      "tooltip_direction": "left",
+      "tooltip_offset": [
+        -12,
+        0
+      ]
+    },
+    {
+      "id": "07380200",
+      "name": "Amite River near French Settlement",
+      "source": "usgs",
+      "parameter_code": "00065",
+      "datum": "Gage height",
+      "predictions": false,
+      "baseline": {
+        "method": "median_pre_event",
+        "hours_from_download_start": 48
+      },
+      "latitude": 30.2754733015704,
+      "longitude": -90.779261561707,
+      "tooltip_direction": "left",
+      "tooltip_offset": [
+        -12,
+        0
+      ]
     }
   ],
   "storms": [
@@ -86,7 +117,7 @@
       "year": 2019,
       "basin_id": "AL022019",
       "display_title": "Hurricane Barry",
-      "subtitle": "Historical event reconstruction · July 2019",
+      "subtitle": "Historical event reconstruction \u00b7 July 2019",
       "default_chart_window_hours": null,
       "landfall_time_utc": "2019-07-13T15:00:00Z",
       "local_timezone": "America/Chicago",
@@ -128,7 +159,7 @@
       "year": 2021,
       "basin_id": "AL092021",
       "display_title": "Hurricane Ida",
-      "subtitle": "Historical event reconstruction · August–September 2021",
+      "subtitle": "Historical event reconstruction \u00b7 August\u2013September 2021",
       "default_chart_window_hours": 120,
       "landfall_time_utc": "2021-08-29T16:55:00Z",
       "local_timezone": "America/Chicago",
@@ -153,7 +184,7 @@
       "year": 2012,
       "basin_id": "AL092012",
       "display_title": "Hurricane Isaac",
-      "subtitle": "Historical event reconstruction · August–September 2012",
+      "subtitle": "Historical event reconstruction \u00b7 August\u2013September 2012",
       "default_chart_window_hours": 120,
       "landfall_time_utc": "2012-08-29T00:00:00Z",
       "local_timezone": "America/Chicago",
@@ -179,7 +210,7 @@
       "year": 2020,
       "basin_id": "AL192020",
       "display_title": "Hurricane Sally",
-      "subtitle": "Historical event reconstruction · September 2020",
+      "subtitle": "Historical event reconstruction \u00b7 September 2020",
       "default_chart_window_hours": 120,
       "landfall_time_utc": "2020-09-16T09:45:00Z",
       "local_timezone": "America/Chicago",
@@ -216,7 +247,7 @@
       "year": 2024,
       "basin_id": "AL062024",
       "display_title": "Hurricane Francine",
-      "subtitle": "Historical event reconstruction · September 2024",
+      "subtitle": "Historical event reconstruction \u00b7 September 2024",
       "default_chart_window_hours": 120,
       "landfall_time_utc": "2024-09-11T22:00:00Z",
       "local_timezone": "America/Chicago",
@@ -253,7 +284,7 @@
       "year": 2020,
       "basin_id": "AL282020",
       "display_title": "Hurricane Zeta",
-      "subtitle": "Historical event reconstruction · October–November 2020",
+      "subtitle": "Historical event reconstruction \u00b7 October\u2013November 2020",
       "default_chart_window_hours": 120,
       "landfall_time_utc": "2020-10-28T21:00:00Z",
       "local_timezone": "America/Chicago",
@@ -290,7 +321,7 @@
       "year": 2020,
       "basin_id": "AL032020",
       "display_title": "Tropical Storm Cristobal",
-      "subtitle": "Historical event reconstruction · May–June 2020",
+      "subtitle": "Historical event reconstruction \u00b7 May\u2013June 2020",
       "default_chart_window_hours": 120,
       "landfall_time_utc": "2020-06-07T22:00:00Z",
       "local_timezone": "America/Chicago",
@@ -327,7 +358,7 @@
       "year": 2021,
       "basin_id": "AL032021",
       "display_title": "Tropical Storm Claudette",
-      "subtitle": "Historical event reconstruction · June 2021",
+      "subtitle": "Historical event reconstruction \u00b7 June 2021",
       "default_chart_window_hours": 120,
       "landfall_time_utc": "2021-06-19T04:30:00Z",
       "local_timezone": "America/Chicago",

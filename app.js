@@ -695,7 +695,7 @@
         );
         const departureLabel = station.predictionsAvailable ? "Departure from predicted tide" : `Departure from ${station.normal}`;
         marker.bindPopup(
-          `<strong>${station.name}</strong><br>Observed: ${observed == null ? "missing" : observed.toFixed(2) + " ft " + station.datum}<br>${departureLabel}: ${signed(departure)} ft${predicted == null ? "" : `<br>Predicted tide: ${predicted.toFixed(2)} ft ${station.datum}`}<br><small>NOAA station ${id}</small>`
+          `<strong>${station.name}</strong><br>Observed: ${observed == null ? "missing" : observed.toFixed(2) + " ft " + station.datum}<br>${departureLabel}: ${signed(departure)} ft${predicted == null ? "" : `<br>Predicted tide: ${predicted.toFixed(2)} ft ${station.datum}`}<br><small>${station.source === "usgs" ? "USGS site" : "NOAA station"} ${id}</small>`
         );
       }
 

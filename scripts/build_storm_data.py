@@ -29,6 +29,7 @@ DEFAULT_CONFIG = Path(__file__).with_name("storms.json")
 DEFAULT_OUTPUT = ROOT / "data"
 DEFAULT_CACHE = ROOT / ".cache" / "storm-data"
 COOPS_URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+USGS_IV_URL = "https://waterservices.usgs.gov/nwis/iv/"
 
 STATUS_NAMES = {
     "DB": "Disturbance",
@@ -165,6 +166,77 @@ def coops_series(
         timestamp = datetime.strptime(row["t"], "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
         result[timestamp] = value
     return result, payload.get("metadata"), url, None
+
+
+def usgs_series(
+    downloader: Downloader,
+    station: dict[str, Any],
+    start: datetime,
+    end: datetime,
+) -> tuple[dict[datetime, float], dict[str, Any] | None, str, str | None]:
+    params = {
+        "format": "json",
+        "sites": station["id"],
+        "parameterCd": station.get("parameter_code", "00065"),
+        "startDT": iso_utc(start),
+        "endDT": iso_utc(end),
+        "siteStatus": "all",
+    }
+    url = f"{USGS_IV_URL}?{urllib.parse.urlencode(params)}"
+    try:
+        payload = downloader.get_json(url)
+    except Exception as exc:
+        return {}, None, url, str(exc)
+    series_list = payload.get("value", {}).get("timeSeries", [])
+    if not series_list:
+        return {}, None, url, "No USGS instantaneous-value time series returned"
+    selected = None
+    parameter_code = station.get("parameter_code", "00065")
+    for series in series_list:
+        codes = [item.get("value") for item in series.get("variable", {}).get("variableCode", [])]
+        if parameter_code in codes:
+            selected = series
+            break
+    selected = selected or series_list[0]
+    result: dict[datetime, float] = {}
+    for block in selected.get("values", []):
+        for row in block.get("value", []):
+            value = finite_number(row.get("value"))
+            if value is None:
+                continue
+            timestamp = datetime.fromisoformat(row["dateTime"].replace("Z", "+00:00")).astimezone(timezone.utc)
+            result[timestamp] = value
+    source_info = selected.get("sourceInfo", {})
+    geo = source_info.get("geoLocation", {}).get("geogLocation", {})
+    metadata = {
+        "name": source_info.get("siteName", station["name"]),
+        "lat": geo.get("latitude", station.get("latitude")),
+        "lon": geo.get("longitude", station.get("longitude")),
+    }
+    return result, metadata, url, None
+
+
+def align_nearest_series(
+    observations: dict[datetime, float],
+    targets: list[datetime],
+    tolerance_minutes: int = 8,
+) -> dict[datetime, float]:
+    if not observations:
+        return {}
+    source_times = sorted(observations)
+    aligned: dict[datetime, float] = {}
+    cursor = 0
+    tolerance = timedelta(minutes=tolerance_minutes)
+    for target in targets:
+        while cursor + 1 < len(source_times) and source_times[cursor + 1] <= target:
+            cursor += 1
+        candidates = [source_times[cursor]]
+        if cursor + 1 < len(source_times):
+            candidates.append(source_times[cursor + 1])
+        nearest = min(candidates, key=lambda item: abs(item - target))
+        if abs(nearest - target) <= tolerance:
+            aligned[target] = observations[nearest]
+    return aligned
 
 
 def parse_coordinate(value: str) -> float:
@@ -360,27 +432,36 @@ def build_storm(
         station = merge_station_config(common, overrides.get(common["id"]))
         station_id = station["id"]
         station_order.append(station_id)
-        observations, metadata, observation_url, observation_error = coops_series(
-            downloader, station, download_start, download_end, defaults["application"], "water_level"
-        )
-        source_requests.append(observation_url)
-        observation_product = "water_level"
-        if observation_error or not observations:
-            fallback, fallback_metadata, fallback_url, fallback_error = coops_series(
-                downloader, station, download_start, download_end, defaults["application"], "hourly_height"
+        station_source = station.get("source", "coops")
+        if station_source == "usgs":
+            observations, metadata, observation_url, observation_error = usgs_series(
+                downloader, station, download_start, download_end
             )
-            source_requests.append(fallback_url)
-            if fallback:
-                observations = fallback
-                metadata = fallback_metadata or metadata
-                observation_error = None
-                observation_product = "hourly_height"
-                warnings.append(f"{station_id} has no usable 6-minute water levels; using verified hourly heights.")
-            else:
-                observation_error = observation_error or fallback_error
+            source_requests.append(observation_url)
+            observation_product = f"usgs_iv_{station.get('parameter_code', '00065')}"
+            observations = align_nearest_series(observations, times)
+        else:
+            observations, metadata, observation_url, observation_error = coops_series(
+                downloader, station, download_start, download_end, defaults["application"], "water_level"
+            )
+            source_requests.append(observation_url)
+            observation_product = "water_level"
+            if observation_error or not observations:
+                fallback, fallback_metadata, fallback_url, fallback_error = coops_series(
+                    downloader, station, download_start, download_end, defaults["application"], "hourly_height"
+                )
+                source_requests.append(fallback_url)
+                if fallback:
+                    observations = fallback
+                    metadata = fallback_metadata or metadata
+                    observation_error = None
+                    observation_product = "hourly_height"
+                    warnings.append(f"{station_id} has no usable 6-minute water levels; using verified hourly heights.")
+                else:
+                    observation_error = observation_error or fallback_error
+            observations = {timestamp: value for timestamp, value in observations.items() if timestamp in timestamp_set}
         if observation_error:
             warnings.append(f"{station_id} observations: {observation_error}")
-        observations = {timestamp: value for timestamp, value in observations.items() if timestamp in timestamp_set}
         observation_digits = storm.get("observation_rounding_decimals")
         if observation_digits is not None:
             observations = {
@@ -391,7 +472,7 @@ def build_storm(
         predictions: dict[datetime, float] = {}
         prediction_error: str | None = None
         prediction_url: str | None = None
-        if station.get("predictions", False):
+        if station.get("predictions", False) and station_source == "coops":
             predictions, _, prediction_url, prediction_error = coops_series(
                 downloader, station, download_start, download_end, defaults["application"], "predictions"
             )
@@ -433,8 +514,9 @@ def build_storm(
         normal = "NOAA astronomical tide prediction" if station.get("predictions", False) else baseline.get("label", "pre-event baseline") if baseline else "unavailable"
         stations[station_id] = {
             "name": station_name,
-            "lat": lat,
-            "lon": lon,
+            "source": station_source,
+            "lat": lat if lat is not None else finite_number(station.get("latitude")),
+            "lon": lon if lon is not None else finite_number(station.get("longitude")),
             "datum": station["datum"],
             "normal": normal,
             "baseline": baseline,
@@ -493,6 +575,7 @@ def build_storm(
                 "predictions": "NOAA CO-OPS 6-minute astronomical tide predictions",
                 "track": "NHC HURDAT2 official best track",
                 "coopsApi": "https://api.tidesandcurrents.noaa.gov/api/prod/",
+                "usgsIvApi": "https://waterservices.usgs.gov/nwis/iv/",
                 "hurdat": defaults["hurdat_url"],
                 **storm.get("sources", {}),
             },
