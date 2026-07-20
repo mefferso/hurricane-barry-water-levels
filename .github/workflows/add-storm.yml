@@ -31,7 +31,9 @@ jobs:
           python-version: '3.12'
 
       - name: Enable 6-minute water-level support
-        run: python3 scripts/enable_six_minute_data.py
+        run: |
+          sed -i 's/^                raise ValueError(f"{station_id} has/            raise ValueError(f"{station_id} has/' scripts/enable_six_minute_data.py
+          python3 scripts/enable_six_minute_data.py
 
       - name: Resolve and configure storm
         id: storm
@@ -89,7 +91,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add app.js scripts/build_storm_data.py scripts/storms.json data index.html
+          git add app.js scripts/build_storm_data.py scripts/enable_six_minute_data.py scripts/storms.json data index.html
           if git diff --cached --quiet; then
             echo 'No changes to commit. The storm was already configured and its generated files are current.'
             exit 0
