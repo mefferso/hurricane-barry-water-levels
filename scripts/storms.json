@@ -113,6 +113,23 @@
         "tcr": "https://www.nhc.noaa.gov/data/tcr/AL092021_Ida.pdf",
         "event_page": "https://www.weather.gov/lix/hurricaneida2021"
       }
+    },
+    {
+      "id": "isaac-2012",
+      "name": "Isaac",
+      "year": 2012,
+      "basin_id": "AL092012",
+      "display_title": "Hurricane Isaac",
+      "subtitle": "Historical event reconstruction · August–September 2012",
+      "default_chart_window_hours": 120,
+      "landfall_time_utc": "2012-08-29T00:00:00Z",
+      "local_timezone": "America/Chicago",
+      "map_bounds": [[26.0, -92.8], [32.0, -87.0]],
+      "sources": {
+        "tcr": "https://www.nhc.noaa.gov/data/tcr/AL092012_Isaac.pdf",
+        "event_page": "https://www.weather.gov/lix/ts2012",
+        "post_storm_report": "https://www.weather.gov/lix/psh_isaac"
+      }
     }
   ]
 }
