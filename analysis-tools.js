@@ -128,41 +128,70 @@
     return typeof value === "number" && Number.isFinite(value);
   }
 
+  function median(values) {
+    if (!values.length) return null;
+    const sorted = [...values].sort((a, b) => a - b);
+    const middle = Math.floor(sorted.length / 2);
+    return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+  }
+
+  function hourlyDepartures(stationValues, slice) {
+    const buckets = new Map();
+    stationValues.forEach((values, index) => {
+      const departure = values?.[2];
+      if (!finiteValue(departure)) return;
+      const hour = Math.floor(slice.times[index].getTime() / HOUR_MS) * HOUR_MS;
+      if (!buckets.has(hour)) buckets.set(hour, []);
+      buckets.get(hour).push(departure);
+    });
+    return [...buckets.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([hour, values]) => ({ time: new Date(hour), departure: median(values) }));
+  }
+
   function summaryForStation(dataset, stationId, slice) {
     const station = dataset.stations[stationId];
     const thresholds = dataset.metadata.eventWindow?.thresholds || {};
     const onsetThreshold = Number(thresholds.onset_threshold_ft) || 0.35;
-    const onsetHours = Number(thresholds.onset_consecutive_hours) || 3;
-    const requiredSamples = Math.max(1, Math.ceil((onsetHours * 60) / intervalMinutes(dataset)));
+    const onsetHours = Math.max(1, Math.ceil(Number(thresholds.onset_consecutive_hours) || 3));
     const landfall = new Date(dataset.metadata.landfallTime);
     const stationValues = station.values.slice(slice.startIndex, slice.endIndex + 1);
+    const hourly = hourlyDepartures(stationValues, slice);
 
     let runLength = 0;
-    let riseIndex = null;
+    let runStartTime = null;
+    let riseTime = null;
+    let previousHour = null;
     let peakIndex = null;
     let peakDeparture = -Infinity;
-    let samplesAboveOne = 0;
+
+    hourly.forEach(point => {
+      const isConsecutive = previousHour == null || Math.abs(point.time - previousHour - HOUR_MS) < 1000;
+      if (!isConsecutive) {
+        runLength = 0;
+        runStartTime = null;
+      }
+      if (point.departure >= onsetThreshold) {
+        if (!runLength) runStartTime = point.time;
+        runLength += 1;
+        if (riseTime == null && runLength >= onsetHours) riseTime = runStartTime;
+      } else {
+        runLength = 0;
+        runStartTime = null;
+      }
+      previousHour = point.time;
+    });
 
     stationValues.forEach((values, index) => {
       const departure = values?.[2];
-      if (finiteValue(departure) && departure >= onsetThreshold) {
-        runLength += 1;
-        if (riseIndex == null && runLength >= requiredSamples) {
-          riseIndex = index - runLength + 1;
-        }
-      } else {
-        runLength = 0;
-      }
-
       if (finiteValue(departure) && departure > peakDeparture) {
         peakDeparture = departure;
         peakIndex = index;
       }
-      if (finiteValue(departure) && departure >= 1) samplesAboveOne += 1;
     });
 
     const peakTime = peakIndex == null ? null : slice.times[peakIndex];
-    const riseTime = riseIndex == null ? null : slice.times[riseIndex];
+    const hoursAboveOne = hourly.filter(point => point.departure >= 1).length;
     return {
       station,
       stationId,
@@ -171,7 +200,7 @@
       peakDeparture: peakIndex == null ? null : peakDeparture,
       peakSliceIndex: peakIndex,
       relativePeakHours: peakTime ? (peakTime - landfall) / HOUR_MS : null,
-      hoursAboveOne: samplesAboveOne * intervalMinutes(dataset) / 60,
+      hoursAboveOne,
       onsetThreshold,
       onsetHours
     };
@@ -188,7 +217,7 @@
     els.summaryLabel.textContent = dataset.metadata.displayTitle;
     const threshold = summaries[0]?.onsetThreshold ?? 0.35;
     const hours = summaries[0]?.onsetHours ?? 3;
-    els.summaryMethod.textContent = `Sustained rise is the first uninterrupted ${hours}-hour period at or above +${threshold.toFixed(2)} ft. Time at +1 ft totals reporting intervals and may include separate episodes.`;
+    els.summaryMethod.textContent = `Sustained rise is the first ${hours} consecutive hourly median departures at or above +${threshold.toFixed(2)} ft. Time at +1 ft counts hourly median intervals and may include separate episodes.`;
 
     if (!summaries.length) {
       els.summaryBody.innerHTML = '<tr><td colspan="6" class="analysis-empty">No available gauges for this event.</td></tr>';
