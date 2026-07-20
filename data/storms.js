@@ -56,6 +56,13 @@ window.STORM_CATALOG = [
     "dataFile": "data/isaac-2012.js"
   },
   {
+    "id": "gustav-2008",
+    "name": "Hurricane Gustav",
+    "year": 2008,
+    "defaultChartWindowHours": 120,
+    "dataFile": "data/gustav-2008.js"
+  },
+  {
     "id": "katrina-2005",
     "name": "Hurricane Katrina",
     "year": 2005,
