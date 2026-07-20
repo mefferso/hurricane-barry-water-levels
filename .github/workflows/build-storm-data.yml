@@ -14,8 +14,6 @@ on:
     paths:
       - scripts/storms.json
       - scripts/build_storm_data.py
-      - scripts/enable_six_minute_data.py
-      - scripts/add_inland_and_shell_beach_stations.py
       - scripts/sync_storm_catalog.py
       - app.js
       - .github/workflows/build-storm-data.yml
@@ -42,14 +40,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Enable 6-minute water-level support
-        run: |
-          sed -i 's/^                raise ValueError(f"{station_id} has/            raise ValueError(f"{station_id} has/' scripts/enable_six_minute_data.py
-          python3 scripts/enable_six_minute_data.py
-
-      - name: Add Shell Beach and French Settlement support
-        run: python3 scripts/add_inland_and_shell_beach_stations.py
 
       - name: Determine storms to build
         id: plan
@@ -96,8 +86,6 @@ jobs:
         run: |
           python3 -m py_compile \
             scripts/build_storm_data.py \
-            scripts/enable_six_minute_data.py \
-            scripts/add_inland_and_shell_beach_stations.py \
             scripts/sync_storm_catalog.py
           python3 - <<'PY'
           import json
@@ -131,10 +119,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app.js index.html scripts/storms.json scripts/build_storm_data.py scripts/enable_six_minute_data.py scripts/add_inland_and_shell_beach_stations.py data
+          git add data index.html
           if git diff --cached --quiet; then
             echo "No generated changes to commit."
             exit 0
           fi
-          git commit -m "Add Shell Beach and French Settlement data [skip ci]"
+          git commit -m "Rebuild configured storm data [skip ci]"
           git push
