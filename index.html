@@ -4,26 +4,32 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#071522">
-  <meta name="description" content="Interactive reconstruction of Hurricane Barry and hourly coastal water levels, July 10–20, 2019.">
-  <title>Hurricane Barry Water-Level Timeline</title>
+  <meta name="description" content="Interactive historical hurricane tracks and verified coastal water levels from NOAA and NHC data.">
+  <title>Historical Storm Water-Level Viewer</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="preconnect" href="https://basemaps.cartocdn.com">
   <link rel="stylesheet" href="leaflet.css?v=1.9.4">
-  <link rel="stylesheet" href="styles.css?v=stations-2">
+  <link rel="stylesheet" href="styles.css?v=multi-storm-1">
 </head>
 <body>
   <header class="site-header">
     <div class="title-block">
-      <div class="eyebrow">HISTORICAL EVENT RECONSTRUCTION · JULY 2019</div>
-      <h1>Hurricane Barry <span>Water-Level Timeline</span></h1>
+      <div id="page-subtitle" class="eyebrow">Historical event reconstruction</div>
+      <h1><span id="storm-title" class="storm-title">Historical Storm</span> <span class="viewer-title">Water-Level Timeline</span></h1>
     </div>
-    <div class="header-badges" aria-label="Data summary">
-      <span>5 gauges</span><span>264 hours</span><span>NOAA verified</span>
+    <div class="header-controls">
+      <label class="storm-picker">
+        <span>Storm</span>
+        <select id="storm-select" aria-label="Select historical storm"></select>
+      </label>
+      <div class="header-badges" aria-label="Selected storm data summary">
+        <span id="gauge-count">— gauges</span><span id="hour-count">— hours</span><span>NOAA verified</span>
+      </div>
     </div>
   </header>
 
   <main class="dashboard">
-    <section class="map-shell" aria-label="Interactive map">
+    <section class="map-shell" aria-label="Interactive storm and water-level map">
       <div id="map"></div>
       <div class="time-overlay" aria-live="polite">
         <div id="time-local" class="time-local"></div>
@@ -57,7 +63,7 @@
           <span id="chart-time"></span>
         </div>
         <div class="water-chart-wrap">
-          <svg id="water-chart" viewBox="0 0 480 360" role="img" aria-label="Hourly verified water levels for five NOAA gauges"></svg>
+          <svg id="water-chart" viewBox="0 0 480 360" role="img" aria-label="Hourly verified water levels"></svg>
         </div>
         <div class="gauge-filter-heading">
           <span>Show gauges</span>
@@ -75,8 +81,8 @@
     <div class="jump-row">
       <button id="jump-start" class="jump-button" type="button">Start</button>
       <button id="jump-landfall" class="jump-button active" type="button">Landfall</button>
-      <label class="date-jump">Jump to (CDT)
-        <input id="date-input" type="datetime-local" min="2019-07-09T19:00" max="2019-07-20T18:00" step="3600">
+      <label class="date-jump">Jump to (<span id="date-zone">local</span>)
+        <input id="date-input" type="datetime-local" step="3600">
       </label>
       <label class="speed-control">Playback
         <select id="speed-select">
@@ -94,15 +100,17 @@
       <button id="forward-1" class="transport" type="button" aria-label="Forward 1 hour">+1h</button>
       <button id="forward-6" class="transport" type="button" aria-label="Forward 6 hours">+6h</button>
       <div class="range-wrap">
-        <input id="timeline" type="range" min="0" max="263" step="1" value="87" aria-label="Hourly timeline">
-        <div class="range-labels"><span>Jul 10</span><span>Jul 13 landfall</span><span>Jul 20</span></div>
+        <input id="timeline" type="range" min="0" max="1" step="1" value="0" aria-label="Hourly timeline">
+        <div class="range-labels"><span id="range-start">Start</span><span id="range-landfall">Landfall</span><span id="range-end">End</span></div>
       </div>
     </div>
     <div class="keyboard-hint">←/→ one hour · Shift + ←/→ six hours · Space play/pause</div>
   </section>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="data.js"></script>
-  <script src="app.js?v=stations-2"></script>
+  <script src="data/storms.js"></script>
+  <script src="data/barry-2019.js"></script>
+  <script src="data/ida-2021.js"></script>
+  <script src="app.js?v=multi-storm-1"></script>
 </body>
 </html>
