@@ -28,6 +28,13 @@ window.STORM_CATALOG = [
     "dataFile": "data/zeta-2020.js"
   },
   {
+    "id": "cristobal-2020",
+    "name": "Tropical Storm Cristobal",
+    "year": 2020,
+    "defaultChartWindowHours": 120,
+    "dataFile": "data/cristobal-2020.js"
+  },
+  {
     "id": "barry-2019",
     "name": "Hurricane Barry",
     "year": 2019,

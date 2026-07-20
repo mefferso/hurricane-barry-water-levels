@@ -283,6 +283,43 @@
           }
         ]
       }
+    },
+    {
+      "id": "cristobal-2020",
+      "name": "Cristobal",
+      "year": 2020,
+      "basin_id": "AL032020",
+      "display_title": "Tropical Storm Cristobal",
+      "subtitle": "Historical event reconstruction · May–June 2020",
+      "default_chart_window_hours": 120,
+      "landfall_time_utc": "2020-06-07T22:00:00Z",
+      "local_timezone": "America/Chicago",
+      "map_bounds": [
+        [
+          26.0,
+          -93.5
+        ],
+        [
+          32.0,
+          -87.0
+        ]
+      ],
+      "sources": {
+        "hurdat_storm": "https://www.nhc.noaa.gov/data/hurdat/hurdat2-1851-2025-02272026.txt#AL032020",
+        "auto_configuration": "Storm identity and primary regional landfall selected from NHC HURDAT2."
+      },
+      "auto_selected_landfall": {
+        "latitude": 29.3,
+        "longitude": -89.8,
+        "available_regional_landfalls": [
+          {
+            "time_utc": "2020-06-07T22:00:00Z",
+            "latitude": 29.3,
+            "longitude": -89.8,
+            "wind_kt": 45
+          }
+        ]
+      }
     }
   ]
 }
