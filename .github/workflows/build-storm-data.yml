@@ -14,7 +14,9 @@ on:
     paths:
       - scripts/storms.json
       - scripts/build_storm_data.py
+      - scripts/enable_six_minute_data.py
       - scripts/sync_storm_catalog.py
+      - app.js
       - .github/workflows/build-storm-data.yml
 
 permissions:
@@ -40,10 +42,13 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Enable 6-minute water-level support
+        run: python3 scripts/enable_six_minute_data.py
+
       - name: Determine storms to build
         id: plan
         env:
-          REQUESTED_STORM: ${{ github.event.inputs.storm || 'missing' }}
+          REQUESTED_STORM: ${{ github.event.inputs.storm || 'all' }}
         run: |
           python3 - <<'PY'
           import json
@@ -52,7 +57,7 @@ jobs:
 
           config = json.loads(Path("scripts/storms.json").read_text(encoding="utf-8"))
           known = [storm["id"] for storm in config["storms"]]
-          requested = os.environ.get("REQUESTED_STORM", "missing")
+          requested = os.environ.get("REQUESTED_STORM", "all")
 
           if requested == "all":
               selected = known
@@ -83,7 +88,10 @@ jobs:
 
       - name: Validate generated files
         run: |
-          python3 -m py_compile scripts/build_storm_data.py scripts/sync_storm_catalog.py
+          python3 -m py_compile \
+            scripts/build_storm_data.py \
+            scripts/enable_six_minute_data.py \
+            scripts/sync_storm_catalog.py
           python3 - <<'PY'
           import json
           from pathlib import Path
@@ -99,21 +107,23 @@ jobs:
               registration = f'window.STORM_DATASETS["{storm["id"]}"]'
               if registration not in text:
                   failures.append(f"{path} does not register {storm['id']}")
+              if '"intervalMinutes":6' not in text:
+                  failures.append(f"{path} is not a 6-minute dataset")
               if "NaN" in text or "Infinity" in text:
                   failures.append(f"{path} contains a non-finite numeric value")
           if failures:
               raise SystemExit("\n".join(failures))
-          print(f"Validated {len(config['storms'])} configured datasets")
+          print(f"Validated {len(config['storms'])} configured 6-minute datasets")
           PY
 
       - name: Commit generated changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data index.html
+          git add app.js scripts/build_storm_data.py data index.html
           if git diff --cached --quiet; then
             echo "No generated changes to commit."
             exit 0
           fi
-          git commit -m "Generate configured storm data [skip ci]"
+          git commit -m "Generate 6-minute storm data [skip ci]"
           git push
