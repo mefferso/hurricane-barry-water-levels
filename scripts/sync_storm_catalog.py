@@ -24,6 +24,11 @@ END_MARKER = "  <!-- STORM_DATA_SCRIPTS_END -->"
 
 
 def browser_catalog(config: dict[str, Any]) -> list[dict[str, Any]]:
+    storms = sorted(
+        config["storms"],
+        key=lambda storm: (-int(storm["year"]), storm["display_title"])
+    )
+
     return [
         {
             "id": storm["id"],
@@ -32,7 +37,7 @@ def browser_catalog(config: dict[str, Any]) -> list[dict[str, Any]]:
             "defaultChartWindowHours": storm.get("default_chart_window_hours"),
             "dataFile": f"data/{storm['id']}.js",
         }
-        for storm in config["storms"]
+        for storm in storms
     ]
 
 
