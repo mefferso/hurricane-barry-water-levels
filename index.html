@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="preconnect" href="https://basemaps.cartocdn.com">
   <link rel="stylesheet" href="leaflet.css?v=1.9.4">
-  <link rel="stylesheet" href="styles.css?v=stations-1">
+  <link rel="stylesheet" href="styles.css?v=stations-2">
 </head>
 <body>
   <header class="site-header">
@@ -59,7 +59,14 @@
         <div class="water-chart-wrap">
           <svg id="water-chart" viewBox="0 0 480 360" role="img" aria-label="Hourly verified water levels for five NOAA gauges"></svg>
         </div>
-        <div id="chart-legend" class="chart-legend" aria-label="Gauge values at the selected time"></div>
+        <div class="gauge-filter-heading">
+          <span>Show gauges</span>
+          <div class="gauge-filter-actions" role="group" aria-label="Gauge visibility shortcuts">
+            <button id="show-all-stations" class="gauge-filter-button" type="button">All</button>
+            <button id="hide-all-stations" class="gauge-filter-button" type="button">None</button>
+          </div>
+        </div>
+        <div id="chart-legend" class="chart-legend" aria-label="Gauge visibility and values at the selected time"></div>
       </section>
     </aside>
   </main>
@@ -96,6 +103,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="data.js"></script>
-  <script src="app.js?v=stations-1"></script>
+  <script src="app.js?v=stations-2"></script>
 </body>
 </html>
