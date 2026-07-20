@@ -42,7 +42,9 @@
     storm: document.getElementById("storm-card"),
     chart: document.getElementById("water-chart"),
     chartLegend: document.getElementById("chart-legend"),
-    chartTime: document.getElementById("chart-time")
+    chartTime: document.getElementById("chart-time"),
+    showAllStations: document.getElementById("show-all-stations"),
+    hideAllStations: document.getElementById("hide-all-stations")
   };
 
   const map = L.map("map", {
@@ -337,7 +339,7 @@
     ).join("");
 
     const points = DATA.stationOrder.map(id =>
-      `<circle class="chart-point" data-point="${id}" r="3.5" fill="${stationSeriesColors[id]}"${visibleStations.has(id) ? "" : " style=\"display:none\""}></circle>`
+      `<circle class="chart-point${visibleStations.has(id) ? "" : " is-hidden"}" data-point="${id}" r="3.5" fill="${stationSeriesColors[id]}"></circle>`
     ).join("");
 
     els.chart.setAttribute("viewBox", `0 0 ${size.width} ${size.height}`);
@@ -350,13 +352,12 @@
     els.chartLegend.innerHTML = DATA.stationOrder.map(id => {
       const station = DATA.stations[id];
       const checked = visibleStations.has(id);
-      return `<label class="chart-legend-item${checked ? "" : " is-muted"}" data-chart-station="${id}" style="--series:${stationSeriesColors[id]}"><input class="station-toggle" type="checkbox" data-station="${id}"${checked ? " checked" : ""}><span class="chart-swatch"></span><span class="chart-legend-name">${station.name} <small>${station.datum}</small></span><strong class="chart-legend-value" data-chart-value="${id}">—</strong></label>`;
+      return `<label class="chart-legend-item${checked ? "" : " is-muted"}" data-chart-station="${id}" style="--series:${stationSeriesColors[id]}"><input class="station-toggle" type="checkbox" data-station="${id}" aria-label="Show ${station.name}"${checked ? " checked" : ""}><span class="chart-swatch"></span><span class="chart-legend-name">${station.name} <small>${station.datum}</small></span><strong class="chart-legend-value" data-chart-value="${id}">—</strong></label>`;
     }).join("");
 
     els.chartLegend.querySelectorAll(".station-toggle").forEach(toggle => {
       toggle.addEventListener("change", () => {
-        if (toggle.checked) visibleStations.add(toggle.dataset.station);
-        else visibleStations.delete(toggle.dataset.station);
+        setStationVisible(toggle.dataset.station, toggle.checked);
         renderGauges(index);
       });
     });
@@ -394,6 +395,16 @@
     };
   }
 
+  function setStationVisible(id, isVisible) {
+    if (isVisible) visibleStations.add(id);
+    else visibleStations.delete(id);
+  }
+
+  function setAllStationsVisible(isVisible) {
+    DATA.stationOrder.forEach(id => setStationVisible(id, isVisible));
+    renderGauges(index);
+  }
+
   function renderGauges(i) {
     DATA.stationOrder.forEach(id => {
       const station = DATA.stations[id];
@@ -424,9 +435,9 @@
       chart.series[id].classList.toggle("is-hidden", !isVisible);
       const point = chart.points[id];
       if (observed == null || !isVisible) {
-        point.style.display = "none";
+        point.classList.add("is-hidden");
       } else {
-        point.style.display = "";
+        point.classList.remove("is-hidden");
         point.setAttribute("cx", chart.x(i));
         point.setAttribute("cy", chart.y(observed));
       }
@@ -497,6 +508,8 @@
   document.getElementById("reset-view").addEventListener("click", () => {
     map.fitBounds(coastalView, { padding: [16, 16] });
   });
+  els.showAllStations.addEventListener("click", () => setAllStationsVisible(true));
+  els.hideAllStations.addEventListener("click", () => setAllStationsVisible(false));
 
   els.slider.addEventListener("input", event => {
     stopPlayback();
