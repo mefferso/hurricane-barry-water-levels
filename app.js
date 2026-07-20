@@ -317,10 +317,10 @@
     visibleStations = new Set(data.stationOrder.filter(id => data.stations[id].available));
     updateHeader();
     configureTimeline();
+    map.fitBounds(L.latLngBounds(data.metadata.mapBounds), { padding: [16, 16] });
     buildTrackLayers();
     buildStationMarkers();
     chart = buildWaterChart();
-    map.fitBounds(L.latLngBounds(data.metadata.mapBounds), { padding: [16, 16] });
     index = nearestIndex(new Date(data.metadata.landfallTime));
     render();
     if (updateUrl) {
