@@ -1,0 +1,92 @@
+name: Add storm by name and year
+
+on:
+  workflow_dispatch:
+    inputs:
+      storm_name_year:
+        description: 'Storm name and year, for example: Katrina 2005'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: add-storm-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  add:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Resolve and configure storm
+        id: storm
+        env:
+          STORM_NAME_YEAR: ${{ inputs.storm_name_year }}
+        run: |
+          storm_id="$(python3 scripts/add_storm.py "$STORM_NAME_YEAR")"
+          echo "storm_id=$storm_id" >> "$GITHUB_OUTPUT"
+          echo "Resolved storm ID: $storm_id"
+
+      - name: Build official-source dataset
+        run: python3 scripts/build_storm_data.py --storm '${{ steps.storm.outputs.storm_id }}'
+
+      - name: Synchronize selector and HTML
+        run: python3 scripts/sync_storm_catalog.py
+
+      - name: Validate generated output
+        env:
+          STORM_ID: ${{ steps.storm.outputs.storm_id }}
+        run: |
+          python3 -m py_compile \
+            scripts/add_storm.py \
+            scripts/build_storm_data.py \
+            scripts/sync_storm_catalog.py
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          storm_id = os.environ['STORM_ID']
+          config = json.loads(Path('scripts/storms.json').read_text(encoding='utf-8'))
+          configured = {storm['id'] for storm in config['storms']}
+          if storm_id not in configured:
+              raise SystemExit(f'{storm_id} was not added to storms.json')
+
+          path = Path('data') / f'{storm_id}.js'
+          if not path.exists():
+              raise SystemExit(f'Missing generated dataset: {path}')
+          text = path.read_text(encoding='utf-8')
+          if f'window.STORM_DATASETS["{storm_id}"]' not in text:
+              raise SystemExit(f'{path} does not register {storm_id}')
+          if 'NaN' in text or 'Infinity' in text:
+              raise SystemExit(f'{path} contains a non-finite numeric value')
+          if f'data/{storm_id}.js' not in Path('index.html').read_text(encoding='utf-8'):
+              raise SystemExit(f'index.html does not load {storm_id}')
+          print(f'Validated {storm_id}')
+          PY
+
+      - name: Commit generated storm
+        env:
+          STORM_ID: ${{ steps.storm.outputs.storm_id }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/storms.json data index.html
+          if git diff --cached --quiet; then
+            echo 'No changes to commit. The storm was already configured and its generated files are current.'
+            exit 0
+          fi
+          git commit -m "Add ${STORM_ID} storm data [skip ci]"
+          git push
