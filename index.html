@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="leaflet.css?v=1.9.4">
   <link rel="stylesheet" href="styles.css?v=chart-window-1">
   <link rel="stylesheet" href="storm-symbols.css?v=1">
+  <link rel="stylesheet" href="analysis-tools.css?v=1">
 </head>
 <body>
   <header class="site-header">
@@ -125,6 +126,79 @@
     <div class="keyboard-hint">←/→ one hour · Shift + ←/→ six hours · Space play/pause</div>
   </section>
 
+  <section class="analysis-workspace" aria-label="Storm analysis tools">
+    <section class="analysis-card summary-card" aria-labelledby="summary-heading">
+      <div class="analysis-heading">
+        <div>
+          <div class="eyebrow">AUTOMATIC EVENT SUMMARY</div>
+          <h2 id="summary-heading">Gauge response at a glance</h2>
+          <p class="analysis-description">Peak departures, sustained-rise timing, landfall-relative timing, and total time at least one foot above predicted tide or the station baseline.</p>
+        </div>
+        <span id="summary-storm-label" class="analysis-storm-badge">Selected storm</span>
+      </div>
+      <div class="summary-table-wrap">
+        <table id="event-summary-table" class="event-summary-table">
+          <thead>
+            <tr>
+              <th>Station</th>
+              <th>Sustained rise began</th>
+              <th>Peak departure</th>
+              <th>Peak time</th>
+              <th>From landfall</th>
+              <th>Time ≥ +1 ft</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="summary-footer">
+        <span id="summary-method"></span>
+        <strong>Click a row to jump to its peak.</strong>
+      </div>
+    </section>
+
+    <section class="analysis-card comparison-card" aria-labelledby="comparison-heading">
+      <div class="analysis-heading">
+        <div>
+          <div class="eyebrow">STORM COMPARISON</div>
+          <h2 id="comparison-heading">Landfall-relative gauge response</h2>
+          <p class="analysis-description">Both storms are aligned to T+0 at landfall, making onset, peak magnitude, lag, and recovery directly comparable.</p>
+        </div>
+        <span class="analysis-storm-badge">Primary: <b id="comparison-primary-label">Selected storm</b></span>
+      </div>
+
+      <div class="comparison-controls">
+        <label class="comparison-control">Compare with
+          <select id="comparison-storm-select" aria-label="Comparison storm"></select>
+        </label>
+        <label class="comparison-control">Station
+          <select id="comparison-station-select" aria-label="Comparison station"></select>
+        </label>
+        <label class="comparison-control">Metric
+          <select id="comparison-metric-select" aria-label="Comparison metric">
+            <option value="departure">Departure</option>
+            <option value="observed">Verified height</option>
+          </select>
+        </label>
+        <label class="comparison-control">Time window
+          <select id="comparison-window-select" aria-label="Landfall-relative comparison window">
+            <option value="120:72">T−5d to T+3d</option>
+            <option value="72:72">T−3d to T+3d</option>
+            <option value="48:48">T−48h to T+48h</option>
+            <option value="full">Full common period</option>
+          </select>
+        </label>
+        <button id="swap-comparison" class="swap-comparison" type="button">Swap storms</button>
+      </div>
+
+      <div class="comparison-chart-wrap">
+        <svg id="comparison-chart" viewBox="0 0 760 340" role="img" aria-label="Landfall-relative water-level comparison"></svg>
+      </div>
+      <div id="comparison-hover" class="comparison-hover" aria-live="polite"></div>
+      <div id="comparison-insights" class="comparison-insights" aria-live="polite"></div>
+    </section>
+  </section>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <!-- STORM_DATA_SCRIPTS_START -->
   <script src="data/storms.js?v=40685be53f"></script>
@@ -138,5 +212,6 @@
   <script src="data/isaac-2012.js?v=40685be53f"></script>
   <!-- STORM_DATA_SCRIPTS_END -->
   <script src="app.js?v=chart-window-1"></script>
+  <script src="analysis-tools.js?v=1"></script>
 </body>
 </html>
