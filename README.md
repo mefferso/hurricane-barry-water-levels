@@ -4,8 +4,9 @@ A reusable static GitHub Pages viewer that synchronizes official NHC best tracks
 
 - Hurricane Barry — 2019
 - Hurricane Ida — 2021
+- Hurricane Isaac — 2012
 
-Barry remains the default so existing bookmarks without a query parameter behave as before. A selected storm can be linked directly with `?storm=barry-2019` or `?storm=ida-2021`.
+Barry remains the default so existing bookmarks without a query parameter behave as before. A selected storm can be linked directly with `?storm=barry-2019`, `?storm=ida-2021`, or `?storm=isaac-2012`.
 
 ## Viewer behavior
 
@@ -13,7 +14,7 @@ Changing the storm rebuilds the track, elapsed-track line, storm marker, gauge m
 
 Each available gauge has an independent visibility checkbox. Turning a gauge off hides its map marker and permanent label, full chart series, and highlighted current-hour chart point. **All** and **None** provide shortcuts; any individual combination remains supported.
 
-The lower timeline always covers the storm's complete configured event period. The chart has a separate viewport that can show the full event or a 7-day, 5-day, 3-day, or 48-hour interval. **Earlier** and **Later** pan that chart-only window without moving the storm reconstruction; **Reset plot** restores the selected storm's configured default. Barry defaults to its full event, while Ida defaults to a five-day window centered on landfall. Moving the main timeline beyond the visible chart range automatically pans the limited chart window enough to include the selected hour.
+The lower timeline always covers the storm's complete configured event period. The chart has a separate viewport that can show the full event or a 7-day, 5-day, 3-day, or 48-hour interval. **Earlier** and **Later** pan that chart-only window without moving the storm reconstruction; **Reset plot** restores the selected storm's configured default. Barry defaults to its full event, while Ida and Isaac default to five-day windows centered on landfall. Moving the main timeline beyond the visible chart range automatically pans the limited chart window enough to include the selected hour.
 
 The chart and timeline support:
 
@@ -29,16 +30,23 @@ The chart and timeline support:
 ## Repository structure
 
 ```text
+.github/workflows/
+  build-storm-data.yml  Builds missing configured datasets and commits them
+
 data/
-  storms.js          Small browser-facing storm catalog
-  barry-2019.js      Generated Barry dataset
-  ida-2021.js        Generated Ida dataset
+  storms.js             Generated browser-facing storm catalog
+  barry-2019.js         Generated Barry dataset
+  ida-2021.js           Generated Ida dataset
+  isaac-2012.js         Generated Isaac dataset
+
 scripts/
-  storms.json        Storm, station, threshold, and display configuration
-  build_storm_data.py
-app.js               Generic event-driven viewer
-index.html           Static application shell
-styles.css           Shared responsive design
+  storms.json           Storm, station, threshold, and display configuration
+  build_storm_data.py   Downloads NOAA/NHC data and builds one storm dataset
+  sync_storm_catalog.py Regenerates the catalog and index.html dataset tags
+
+app.js                  Generic event-driven viewer
+index.html              Static application shell
+styles.css              Shared responsive design
 ```
 
 Each generated storm file uses the same schema and registers itself in `window.STORM_DATASETS`. The full downloaded analysis window remains in the dataset. `metadata.eventWindow.displayStart` and `displayEnd` determine the normal interactive timeline. The browser catalog's optional `defaultChartWindowHours` only controls the chart viewport and never shortens the event timeline or source arrays.
@@ -56,15 +64,21 @@ Missing observations remain `null`. They create visible gaps in a chart line and
 NOAA does not provide MHHW or astronomical tide predictions for West Bank 1, Bayou Gauche (8762482). That gauge is retrieved in feet MSL and uses an event-specific baseline:
 
 - **Barry:** the original viewer's fixed −0.212 ft MSL July 10 pre-storm mean is retained so Barry's displayed values remain unchanged.
-- **Ida:** 0.184 ft MSL, the median of 48 verified hourly observations from 2021-08-22 16:00 UTC through 2021-08-24 15:00 UTC.
+- **Ida and Isaac:** the median of the first 48 verified hourly observations in the downloaded pre-event period.
 
 For a baseline station, `departure = observed - event baseline`.
 
-## Hurricane Ida limitations
+## Known event-data limitations
+
+### Hurricane Ida
 
 Port Fourchon (8762075) stops reporting verified hourly observations at 2021-08-29 16:00 UTC, 55 minutes before Ida's official 16:55 UTC landfall. The downloaded 338-hour period therefore contains 169 missing Port Fourchon hours. The chart ends that station's line at the final verified value and leaves the remainder blank.
 
-The other four gauges have verified observations throughout Ida's configured download period. This does not imply that every observation is unaffected by local instrument or datum limitations; it only describes data availability returned by NOAA CO-OPS.
+### Hurricane Isaac
+
+NOAA CO-OPS returned no verified hourly-height data for Port Fourchon (8762075) during the 2012 Isaac download period. The generated dataset marks all 337 Port Fourchon hours missing and disables that gauge in the viewer. New Canal, Grand Isle, Bay Waveland, and Bayou Gauche were returned as available.
+
+A missing or incomplete station record can be operationally meaningful—for example, an instrument may not have existed or may have stopped reporting—but the viewer does not guess the reason. It displays the official API result and records the warning in the generated metadata.
 
 ## Automatic event-analysis window
 
@@ -76,22 +90,32 @@ Current defaults in `scripts/storms.json` are:
 - possible onset when departures exceed +0.35 ft for at least three consecutive hours at two or more available gauges
 - possible recovery when departures are within ±0.25 ft for at least 18 consecutive hours at two or more gauges and at least 75% of gauges reporting that hour
 
-If onset occurs before the default start, the beginning expands. If a confirmed recovery occurs after the default end, the ending expands through the 18-hour confirmation period. If no recovery is confirmed, the display extends through the downloaded period. These thresholds identify an event-analysis window based on water-level departures; they do **not** prove that every departure was caused exclusively by the tropical cyclone.
+If onset occurs before the default start, the beginning expands. If a confirmed recovery occurs after the default end, the ending expands through the 18-hour confirmation period. If no recovery is confirmed, the display extends through the downloaded period.
 
-Ida's calculated onset is 2021-08-24 20:00 UTC. No confirmed recovery occurred before the end of the downloaded period, so its display runs from 2021-08-24 16:00 UTC through 2021-09-05 17:00 UTC. Barry uses a documented display override to preserve the original 264-hour July 10–20 timeline; its overlapping station rows were checked against the previous `data.js` and match exactly.
+These thresholds identify an event-analysis window based on water-level departures; they do **not** prove that every departure was caused exclusively by the tropical cyclone. Persistent background anomalies can make the automatic period wider than the visibly storm-driven rise, which is why the chart has an independent adjustable viewport.
+
+Current generated results:
+
+- **Barry:** a configured override preserves the original 264-hour July 10–20 timeline.
+- **Ida:** calculated onset is 2021-08-24 20:00 UTC; no confirmed recovery occurred before the download ended.
+- **Isaac:** calculated onset is 2012-08-22 13:00 UTC; no confirmed recovery occurred before 2012-09-05 00:00 UTC.
 
 ## Generate or regenerate storm data
 
 Python 3.10+ is sufficient; no third-party packages are required.
 
+Build all configured events:
+
 ```bash
 python3 scripts/build_storm_data.py --storm all
+python3 scripts/sync_storm_catalog.py
 ```
 
 Build one event:
 
 ```bash
-python3 scripts/build_storm_data.py --storm ida-2021
+python3 scripts/build_storm_data.py --storm isaac-2012
+python3 scripts/sync_storm_catalog.py
 ```
 
 Downloaded source responses are cached under `.cache/storm-data/`. To regenerate without network requests after the cache exists:
@@ -100,7 +124,7 @@ Downloaded source responses are cached under `.cache/storm-data/`. To regenerate
 python3 scripts/build_storm_data.py --storm all --offline
 ```
 
-The builder:
+The data builder:
 
 1. reads storm and station configuration from `scripts/storms.json`;
 2. downloads verified hourly observations and supported tide predictions from NOAA CO-OPS;
@@ -113,15 +137,27 @@ The builder:
 9. prints missing-period, prediction, datum, landfall, and coverage warnings; and
 10. writes one independent static JavaScript dataset per storm.
 
+The catalog synchronizer then rebuilds `data/storms.js`, updates the generated dataset-script block in `index.html`, and uses a configuration hash for cache busting.
+
+## GitHub Actions automation
+
+`.github/workflows/build-storm-data.yml` runs when the storm configuration or builder changes. It:
+
+1. finds configured storms whose `data/<storm-id>.js` file is missing;
+2. runs the official-source Python builder for those storms;
+3. synchronizes the browser catalog and HTML tags;
+4. validates every configured dataset; and
+5. commits the generated files back to the same branch.
+
+The workflow can also be run manually after it reaches the default branch. Its `storm` input accepts a specific storm ID, `missing`, or `all`.
+
 ## Add another storm
 
-1. Add a storm entry to `scripts/storms.json` with its unique ID, Atlantic basin ID, official UTC landfall time, title, local timezone, map bounds, optional `default_chart_window_hours`, and source links.
+1. Add one storm entry to `scripts/storms.json` with its unique ID, Atlantic basin ID, official UTC landfall time, title, local timezone, map bounds, optional `default_chart_window_hours`, and source links.
 2. Add or override station configuration only when its datum, prediction support, label direction, or baseline method differs.
-3. Add the storm to the small browser catalog in `data/storms.js`, including an optional `defaultChartWindowHours` (`null` means the full event).
-4. Add the generated script tag to `index.html`.
-5. Run `python3 scripts/build_storm_data.py --storm <storm-id>`.
-6. Review every warning and document material outages or datum limitations here.
-7. Test switching repeatedly between all events before deployment.
+3. Push the configuration change and let the workflow build the missing dataset, catalog, and HTML tags; or run the two Python commands locally.
+4. Review every generated warning and document material outages or datum limitations here.
+5. Test switching repeatedly between all events before deployment.
 
 Thresholds, download lengths, display lengths, baseline hours, map bounds, tooltip directions, and optional display overrides are configuration values rather than hard-coded application logic.
 
@@ -130,7 +166,10 @@ Thresholds, download lengths, display lengths, baseline hours, map bounds, toolt
 - [NOAA CO-OPS Data API](https://api.tidesandcurrents.noaa.gov/api/prod/)
 - [NHC HURDAT2 archive](https://www.nhc.noaa.gov/data/hurdat/)
 - [NHC Hurricane Barry Tropical Cyclone Report](https://www.nhc.noaa.gov/data/tcr/AL022019_Barry.pdf)
+- [NHC Hurricane Isaac Tropical Cyclone Report](https://www.nhc.noaa.gov/data/tcr/AL092012_Isaac.pdf)
 - [NHC Hurricane Ida Tropical Cyclone Report](https://www.nhc.noaa.gov/data/tcr/AL092021_Ida.pdf)
+
+Isaac's configured first Louisiana landfall is 0000 UTC 29 August 2012, matching the official HURDAT2 landfall point and the approximate time documented in the NHC report. The report also documents a second Louisiana landfall near Port Fourchon around 0800 UTC.
 
 ## Local preview
 
@@ -140,7 +179,7 @@ Serve the repository root with any static web server:
 python3 -m http.server 8000
 ```
 
-Then open `http://localhost:8000`. Test the direct links `?storm=barry-2019` and `?storm=ida-2021` as well as in-page switching.
+Then open `http://localhost:8000`. Test the direct storm query links as well as in-page switching.
 
 ## GitHub Pages deployment
 
