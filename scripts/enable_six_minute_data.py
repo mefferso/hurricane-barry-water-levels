@@ -244,13 +244,25 @@ def patch_builder() -> None:
         "timeline validation",
     )
 
+        text = replace_once(
+        text,
+        '''        raise ValueError("Timeline must contain at least two hours")
+''',
+        '''        raise ValueError("Timeline must contain at least two samples")
+''',
+        "timeline validation",
+    )
+
     text = replace_once(
         text,
-        '''                raise ValueError(f"{station_id} has {len(values)} rows for a {length}-hour timeline")
+        '''        print(f"  wrote {path.relative_to(ROOT)} ({len(dataset['times'])} downloaded hours)")
 ''',
-        '''                raise ValueError(f"{station_id} has {len(values)} rows for a {length}-sample timeline")
+        '''        print(
+            f"  wrote {path.relative_to(ROOT)} "
+            f"({len(dataset['times'])} samples at {dataset['metadata']['intervalMinutes']}-minute intervals)"
+        )
 ''',
-        "station validation",
+        "build summary",
     )
 
     text = replace_once(
