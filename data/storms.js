@@ -98,6 +98,13 @@ window.STORM_CATALOG = [
     "dataFile": "data/gustav-2008.js"
   },
   {
+    "id": "ike-2008",
+    "name": "Hurricane Ike",
+    "year": 2008,
+    "defaultChartWindowHours": 120,
+    "dataFile": "data/ike-2008.js"
+  },
+  {
     "id": "katrina-2005",
     "name": "Hurricane Katrina",
     "year": 2005,
