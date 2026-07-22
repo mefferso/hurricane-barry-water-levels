@@ -56,6 +56,13 @@ window.STORM_CATALOG = [
     "dataFile": "data/gordon-2018.js"
   },
   {
+    "id": "nate-2017",
+    "name": "Hurricane Nate",
+    "year": 2017,
+    "defaultChartWindowHours": 120,
+    "dataFile": "data/nate-2017.js"
+  },
+  {
     "id": "isaac-2012",
     "name": "Hurricane Isaac",
     "year": 2012,

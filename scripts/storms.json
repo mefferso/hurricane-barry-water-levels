@@ -505,6 +505,49 @@
           }
         ]
       }
+    },
+    {
+      "id": "nate-2017",
+      "name": "Nate",
+      "year": 2017,
+      "basin_id": "AL162017",
+      "display_title": "Hurricane Nate",
+      "subtitle": "Historical event reconstruction · October 2017",
+      "default_chart_window_hours": 120,
+      "landfall_time_utc": "2017-10-08T00:00:00Z",
+      "local_timezone": "America/Chicago",
+      "map_bounds": [
+        [
+          26.0,
+          -93.5
+        ],
+        [
+          32.0,
+          -87.0
+        ]
+      ],
+      "sources": {
+        "hurdat_storm": "https://www.nhc.noaa.gov/data/hurdat/hurdat2-1851-2025-02272026.txt#AL162017",
+        "auto_configuration": "Storm identity and primary regional landfall selected from NHC HURDAT2."
+      },
+      "auto_selected_landfall": {
+        "latitude": 29.1,
+        "longitude": -89.2,
+        "available_regional_landfalls": [
+          {
+            "time_utc": "2017-10-08T00:00:00Z",
+            "latitude": 29.1,
+            "longitude": -89.2,
+            "wind_kt": 75
+          },
+          {
+            "time_utc": "2017-10-08T05:20:00Z",
+            "latitude": 30.4,
+            "longitude": -89.0,
+            "wind_kt": 65
+          }
+        ]
+      }
     }
   ]
 }
