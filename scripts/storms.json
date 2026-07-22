@@ -548,6 +548,43 @@
           }
         ]
       }
+    },
+    {
+      "id": "lee-2011",
+      "name": "Lee",
+      "year": 2011,
+      "basin_id": "AL132011",
+      "display_title": "Tropical Storm Lee",
+      "subtitle": "Historical event reconstruction · August–September 2011",
+      "default_chart_window_hours": 120,
+      "landfall_time_utc": "2011-09-04T10:30:00Z",
+      "local_timezone": "America/Chicago",
+      "map_bounds": [
+        [
+          26.0,
+          -93.5
+        ],
+        [
+          32.0,
+          -87.0
+        ]
+      ],
+      "sources": {
+        "hurdat_storm": "https://www.nhc.noaa.gov/data/hurdat/hurdat2-1851-2025-02272026.txt#AL132011",
+        "auto_configuration": "Storm identity and primary regional landfall selected from NHC HURDAT2."
+      },
+      "auto_selected_landfall": {
+        "latitude": 29.6,
+        "longitude": -92.1,
+        "available_regional_landfalls": [
+          {
+            "time_utc": "2011-09-04T10:30:00Z",
+            "latitude": 29.6,
+            "longitude": -92.1,
+            "wind_kt": 40
+          }
+        ]
+      }
     }
   ]
 }

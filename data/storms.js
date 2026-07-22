@@ -70,6 +70,13 @@ window.STORM_CATALOG = [
     "dataFile": "data/isaac-2012.js"
   },
   {
+    "id": "lee-2011",
+    "name": "Tropical Storm Lee",
+    "year": 2011,
+    "defaultChartWindowHours": 120,
+    "dataFile": "data/lee-2011.js"
+  },
+  {
     "id": "gustav-2008",
     "name": "Hurricane Gustav",
     "year": 2008,
