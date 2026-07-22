@@ -7,7 +7,7 @@ Example:
 The script resolves the official Atlantic basin ID and relevant landfall point
 from NHC HURDAT2, then appends a standard project configuration entry. It is
 intentionally conservative: if no HURDAT2 landfall falls inside the configured
-Louisiana/Mississippi coastal box, it stops instead of guessing.
+northern Gulf Coast box, it stops instead of guessing.
 """
 
 from __future__ import annotations
@@ -24,7 +24,11 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG = Path(__file__).with_name("storms.json")
 DEFAULT_BOUNDS = [[26.0, -93.5], [32.0, -87.0]]
-LANDFALL_BOX = {"south": 27.0, "north": 31.5, "west": -93.5, "east": -87.0}
+
+# Include the upper Texas coast because storms making landfall near Galveston
+# can still produce important water-level impacts across Louisiana and
+# Mississippi. The previous -93.5 western limit incorrectly rejected Ike.
+LANDFALL_BOX = {"south": 27.0, "north": 31.5, "west": -95.5, "east": -87.0}
 
 
 def parse_request(value: str) -> tuple[str, int]:
@@ -137,7 +141,7 @@ def add_storm(config_path: Path, request: str) -> tuple[str, bool, dict[str, Any
                 all_landfalls.append(f"{row[0]} {row[1]} at {row[4]}, {row[5]}")
         detail = "; ".join(all_landfalls) if all_landfalls else "no HURDAT2 landfall records"
         raise ValueError(
-            "No Louisiana/Mississippi-area HURDAT2 landfall was found. "
+            "No northern Gulf Coast-area HURDAT2 landfall was found. "
             f"Available landfalls: {detail}. Add this storm manually if it is still relevant."
         )
 
