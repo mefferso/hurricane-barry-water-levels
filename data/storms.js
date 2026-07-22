@@ -49,6 +49,13 @@ window.STORM_CATALOG = [
     "dataFile": "data/barry-2019.js"
   },
   {
+    "id": "gordon-2018",
+    "name": "Tropical Storm Gordon",
+    "year": 2018,
+    "defaultChartWindowHours": 120,
+    "dataFile": "data/gordon-2018.js"
+  },
+  {
     "id": "isaac-2012",
     "name": "Hurricane Isaac",
     "year": 2012,
