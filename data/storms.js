@@ -21,6 +21,13 @@ window.STORM_CATALOG = [
     "dataFile": "data/claudette-2021.js"
   },
   {
+    "id": "delta-2020",
+    "name": "Hurricane Delta",
+    "year": 2020,
+    "defaultChartWindowHours": 120,
+    "dataFile": "data/delta-2020.js"
+  },
+  {
     "id": "laura-2020",
     "name": "Hurricane Laura",
     "year": 2020,
