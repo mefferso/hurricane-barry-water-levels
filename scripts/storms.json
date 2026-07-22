@@ -585,6 +585,43 @@
           }
         ]
       }
+    },
+    {
+      "id": "laura-2020",
+      "name": "Laura",
+      "year": 2020,
+      "basin_id": "AL132020",
+      "display_title": "Hurricane Laura",
+      "subtitle": "Historical event reconstruction · August–September 2020",
+      "default_chart_window_hours": 120,
+      "landfall_time_utc": "2020-08-27T06:00:00Z",
+      "local_timezone": "America/Chicago",
+      "map_bounds": [
+        [
+          26.0,
+          -93.5
+        ],
+        [
+          32.0,
+          -87.0
+        ]
+      ],
+      "sources": {
+        "hurdat_storm": "https://www.nhc.noaa.gov/data/hurdat/hurdat2-1851-2025-02272026.txt#AL132020",
+        "auto_configuration": "Storm identity and primary regional landfall selected from NHC HURDAT2."
+      },
+      "auto_selected_landfall": {
+        "latitude": 29.8,
+        "longitude": -93.3,
+        "available_regional_landfalls": [
+          {
+            "time_utc": "2020-08-27T06:00:00Z",
+            "latitude": 29.8,
+            "longitude": -93.3,
+            "wind_kt": 130
+          }
+        ]
+      }
     }
   ]
 }
